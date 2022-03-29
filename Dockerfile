@@ -22,3 +22,4 @@ COPY --from=build /github.com/okutsen/PasswordManager/build/out /out
 ENTRYPOINT [ "/out" ]
 
 # Pass secrets to Docker
+# golangci-lint
