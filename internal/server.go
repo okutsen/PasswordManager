@@ -8,11 +8,11 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type Client struct {
+type ClientAPI struct {
 	// log Logger
 }
 
-func (c *Client) getRecords(w http.ResponseWriter, _ *http.Request, _ httprouter.Params) {
+func (c *ClientAPI) getRecords(w http.ResponseWriter, _ *http.Request, _ httprouter.Params) {
 	log.Info("Endpoint Hit: getRecords")
 	var message string = "Records:\n1,2,3,4"
 	log.Infof("Response writen %s", message)
@@ -26,7 +26,7 @@ func (c *Client) getRecords(w http.ResponseWriter, _ *http.Request, _ httprouter
 	// }
 }
 
-func (c *Client) createRecords(w http.ResponseWriter, _ *http.Request, _ httprouter.Params) {
+func (c *ClientAPI) createRecords(w http.ResponseWriter, _ *http.Request, _ httprouter.Params) {
 	log.Info("Endpoint Hit: getRecords")
 
 	fmt.Fprintf(w, "New Record created")
@@ -34,7 +34,7 @@ func (c *Client) createRecords(w http.ResponseWriter, _ *http.Request, _ httprou
 	// TODO: parse JSON input
 }
 
-func (c *Client) Start() {
+func (c *ClientAPI) Start() {
 	log.Info("Server started")
 	router := httprouter.New()
 	router.GET("/records", c.getRecords)
