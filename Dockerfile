@@ -15,6 +15,10 @@ RUN cd ./cmd/ && go build -o ../build/out
 
 FROM alpine:3.15 AS release
 
+EXPOSE 10000
+
 COPY --from=build /github.com/okutsen/PasswordManager/build/out /out
 
 ENTRYPOINT [ "/out" ]
+
+# Pass secrets to Docker
