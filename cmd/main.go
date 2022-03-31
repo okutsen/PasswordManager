@@ -9,7 +9,8 @@ import "github.com/okutsen/PasswordManager/internal"
 // log Logger := &log.Logger
 
 // TODO: password tips or reset questions
+
 func main() {
-	clientServer := &internal.ClientAPI{}
+	clientServer := internal.NewClientAPI()
 	clientServer.Start()
 }
