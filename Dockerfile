@@ -8,8 +8,8 @@ RUN go mod download
 
 COPY cmd/main.go ./cmd/
 COPY api/*.go ./api/
-COPY internal/*.go ./internal/
 COPY pkg/*.go ./pkg/
+COPY internal/*.go ./internal/
 
 RUN cd ./cmd/ && go build -o ../build/out
 
