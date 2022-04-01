@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -9,73 +8,101 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-func TestGetRecords(t *testing.T) {
-	client := NewClientAPI()
-	tests := []struct {
-		name               string
-		recordName         string
-		expectedHTTPStatus int
-		expectedResult     string
-	}{
-		{
-			name:               "Get record by Name:1",
-			recordName:         "",
-			expectedHTTPStatus: http.StatusOK,
-			expectedResult:     "Records:\n0,1,2,3,4,5",
-		},
-		{
-			name:               "Get record by Name:1",
-			recordName:         "0",
-			expectedHTTPStatus: http.StatusOK,
-			expectedResult:     "Records:\n0",
-		},
-		{
-			name:               "Get record by Name:5",
-			recordName:         "5",
-			expectedHTTPStatus: http.StatusOK,
-			expectedResult:     "Records:\n5",
-		},
-		{
-			name:               "Returns 404 on missing record",
-			recordName:         "6",
-			expectedHTTPStatus: http.StatusBadRequest,
-			expectedResult:     "Record not found",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			request := newGetRequest(tt.recordName)
-			response := httptest.NewRecorder()
-			ps := httprouter.Param{Key: "recordName", Value: tt.recordName}
-			client.getRecords(response, request, httprouter.Params{ps})
+const (
+	testSeparator string = "\n---------------------\n"
+)
 
-			assertStatus(t, response.Code, tt.expectedHTTPStatus)
-			assertResponseBody(t, response.Body.String(), tt.expectedResult)
+type TableTest struct {
+	name               string
+	httpPathParam      string
+	expectedHTTPStatus int
+	expectedBody       string
+}
+
+type TableTests struct {
+	tt         []*TableTest
+	httpMethod string
+	httpPath   string
+	httpServer *ClientAPI
+	handler    HandlerFunc
+}
+
+type HandlerFunc func(*ClientAPI, http.ResponseWriter, *http.Request, httprouter.Params)
+
+func TestGetRecords(t *testing.T) {
+	tests := TableTests{
+		tt: []*TableTest{
+			{
+				name:               "Get all records",
+				httpPathParam:      "",
+				expectedHTTPStatus: http.StatusOK,
+				expectedBody:       "Records:\n0,1,2,3,4,5",
+			},
+			{
+				name:               "Get record by Name:1",
+				httpPathParam:      "0",
+				expectedHTTPStatus: http.StatusOK,
+				expectedBody:       "Records:\n0",
+			},
+			{
+				name:               "Get record by Name:5",
+				httpPathParam:      "5",
+				expectedHTTPStatus: http.StatusOK,
+				expectedBody:       "Records:\n5",
+			},
+			{
+				name:               "Returns 404 on missing record",
+				httpPathParam:      "6",
+				expectedHTTPStatus: http.StatusBadRequest,
+				expectedBody:       "Record not found",
+			}},
+
+		httpMethod: http.MethodPost,
+		httpPath:   "/records/",
+		httpServer: NewClientAPI(),
+		handler:    (*ClientAPI).getRecords,
+	}
+	TableTestRunner(t, tests)
+}
+
+func TestPostRecords(t *testing.T) {
+	tests := TableTests{
+		tt: []*TableTest{
+			{
+				name:               "Post record",
+				expectedHTTPStatus: http.StatusAccepted,
+				expectedBody:       "New Record created",
+			}},
+
+		httpMethod: http.MethodPost,
+		httpPath:   "/records/",
+		httpServer: NewClientAPI(),
+		handler:    (*ClientAPI).createRecords,
+	}
+	TableTestRunner(t, tests)
+}
+
+func TableTestRunner(t *testing.T, tt TableTests) {
+	t.Helper()
+	for _, test := range tt.tt {
+		t.Run(test.name, func(t *testing.T) {
+			request := httptest.NewRequest(tt.httpMethod, tt.httpPath+test.httpPathParam, nil)
+			response := httptest.NewRecorder()
+			ps := httprouter.Params{httprouter.Param{Key: getByIdParamName, Value: test.httpPathParam}}
+			tt.handler(tt.httpServer, response, request, ps)
+
+			assert(t, response.Code, test.expectedHTTPStatus, "Wrong status")
+			assert(t, response.Body.String(), test.expectedBody, "Wrong body")
 		})
 	}
-
 }
 
-func newGetRequest(recordName string) *http.Request {
-	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/records/%s", recordName), nil)
-	return req
-}
-
-func newPostRequest() *http.Request {
-	req, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("/records"), nil)
-	return req
-}
-
-func assertStatus(t testing.TB, got, want int) {
+func assert[T comparable](t *testing.T, got, want T, errorMessage string) {
 	t.Helper()
 	if got != want {
-		t.Errorf("did not get correct status, got %d, want %d", got, want)
-	}
-}
-
-func assertResponseBody(t testing.TB, got, want string) {
-	t.Helper()
-	if got != want {
-		t.Errorf("response body is wrong, got %q want %q", got, want)
+		t.Errorf("%s\nGot:%s%v%sWant:%s%v%s",
+			errorMessage,
+			testSeparator, got, testSeparator,
+			testSeparator, want, testSeparator)
 	}
 }
