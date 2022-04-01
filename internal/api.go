@@ -9,6 +9,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const getByIdParamName = "recordName"
+
 type ClientAPI struct {
 	// TODO: log log.Logger
 }
@@ -22,7 +24,7 @@ func (c *ClientAPI) Start() {
 	log.Info("Server started")
 	router := httprouter.New()
 	router.GET("/records", c.getRecords)
-	router.GET("/records/:name", c.getRecords)
+	router.GET(fmt.Sprintf("/records/:%s", getByIdParamName), c.getRecords)
 	router.POST("/records", c.createRecords)
 
 	log.Fatal(http.ListenAndServe(":10000", router))
