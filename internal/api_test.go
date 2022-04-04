@@ -20,7 +20,7 @@ type TableTest struct {
 }
 
 type TableTests struct {
-	tt         []*TableTest
+	tt         []*TableTest // by pointer or not?
 	httpMethod string
 	httpPath   string
 	httpServer *ClientAPI
