@@ -1,16 +1,15 @@
 package main
 
-import "github.com/okutsen/PasswordManager/internal"
-
-// TODO: write Logger interface on Logrus Logger
-// type Logger interface {
-// 	Info()
-// }
-// log Logger := &log.Logger
+import (
+	"github.com/okutsen/PasswordManager/internal"
+)
 
 // TODO: password tips or reset questions
 
 func main() {
+	domain := internal.NewDomainServer()
+	go domain.Start()
+
 	clientServer := internal.NewClientAPI()
 	clientServer.Start()
 }

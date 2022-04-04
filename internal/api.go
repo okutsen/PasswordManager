@@ -4,35 +4,43 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/julienschmidt/httprouter"
-	log "github.com/sirupsen/logrus"
+	"github.com/okutsen/PasswordManager/config"
 )
 
 const getByIdParamName = "recordName"
 
 type ClientAPI struct {
-	// TODO: log log.Logger
+	domainConnection *http.Client
+	log              Logger
 }
 
 func NewClientAPI() *ClientAPI {
 	// TODO: setup connection with server
-	return &ClientAPI{}
+	return &ClientAPI{
+		domainConnection: &http.Client{
+			Timeout: 60 * time.Second,
+		},
+		log: NewLogger(),
+	}
 }
 
 func (c *ClientAPI) Start() {
-	log.Info("Server started")
+	c.log.Print("ClientAPI started")
 	router := httprouter.New()
 	router.GET("/records", c.getRecords)
 	router.GET(fmt.Sprintf("/records/:%s", getByIdParamName), c.getRecords)
 	router.POST("/records", c.createRecords)
 
-	log.Fatal(http.ListenAndServe(":10000", router))
+	c.log.Fatal(http.ListenAndServe(":"+config.ClientAPIPort, router))
 }
 
 // TODO: pass params to model -> validate them and run query with filters
 func (c *ClientAPI) getRecords(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	log.Info("Endpoint Hit: getRecords")
+	c.log.Print("ClientAPI: Endpoint Hit: getRecords")
+	// TODO: c.domainConnection.Get(config.DomainServerURL + ":" + config.DomainServerPort)
 	var message string
 	recordName := ps.ByName("recordName")
 	if recordName != "" {
@@ -48,10 +56,10 @@ func (c *ClientAPI) getRecords(w http.ResponseWriter, r *http.Request, ps httpro
 		message = "Records:\n0,1,2,3,4,5"
 		w.WriteHeader(http.StatusOK)
 	}
-	log.Infof("Response writen %s", message)
+	c.log.Printf("Response writen %s", message)
 	_, err := fmt.Fprintf(w, message)
 	if err != nil {
-		log.Error("getRecords: Failed to write responce")
+		c.log.Print("Error: getRecords: Failed to write responce")
 	}
 	// TODO: write JSON response
 	// w.Header().Set("Content-Type", "application/json")
@@ -62,22 +70,24 @@ func (c *ClientAPI) getRecords(w http.ResponseWriter, r *http.Request, ps httpro
 }
 
 func (c *ClientAPI) createRecords(w http.ResponseWriter, _ *http.Request, _ httprouter.Params) {
-	log.Info("Endpoint Hit: createRecords")
+	c.log.Print("ClientAPI: Endpoint Hit: createRecords")
+	// TODO: c.domainConnection.Post(config.DomainServerURL + ":" + config.DomainServerPort, body)
 	w.WriteHeader(http.StatusAccepted)
 	_, err := fmt.Fprintf(w, "New Record created")
 	if err != nil {
-		log.Error("createRecords: Failed to write responce")
+		c.log.Print("Error: createRecords: Failed to write responce")
 	}
 
 	// TODO: parse JSON input
 }
 
 func (c *ClientAPI) deleteRecords(w http.ResponseWriter, _ *http.Request, _ httprouter.Params) {
-	log.Info("Endpoint Hit: deleteRecords")
-
+	c.log.Print("Endpoint Hit: deleteRecords")
+	// TODO: req := http.NewRequest(http.MethodDelete, config.DomainServerURL + ":" + config.DomainServerPort, body)
+	// c.domainConnection.Do(req)
 	_, err := fmt.Fprintf(w, "Record deleted")
 	if err != nil {
-		log.Error("deleteRecords: Failed to write responce")
+		c.log.Print("Error: deleteRecords: Failed to write responce")
 	}
 
 	// TODO: parse JSON input
