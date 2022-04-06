@@ -88,7 +88,7 @@ func TableTestRunner(t *testing.T, tt TableTests) {
 		t.Run(test.name, func(t *testing.T) {
 			request := httptest.NewRequest(tt.httpMethod, tt.httpPath+test.httpPathParam, nil)
 			response := httptest.NewRecorder()
-			ps := httprouter.Params{httprouter.Param{Key: api_config.GetByIdParamName, Value: test.httpPathParam}}
+			ps := httprouter.Params{httprouter.Param{Key: apiConfig.GetByIdParamName, Value: test.httpPathParam}}
 			tt.handler(tt.httpServer, response, request, ps)
 
 			assert(t, response.Code, test.expectedHTTPStatus, "Wrong status")

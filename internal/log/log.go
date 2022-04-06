@@ -7,6 +7,7 @@ import (
 )
 
 // TODO: add metrics
+
 type Logger interface {
 	Fatal(v ...any)
 	Fatalf(format string, v ...any)
@@ -24,7 +25,8 @@ type Logger interface {
 // 	 TODO: save created loggers
 // 	 loggers []Logger
 // }
-// method of BaseLogger
+// TODO: method of BaseLogger
+
 func NewLogger() Logger {
 	return logrus.New()
 }

@@ -9,7 +9,7 @@ import (
 type Config struct {
 	Ports
 	PathVars
-	ResponceMessages
+	ResponseMessages
 	Timings
 }
 
@@ -19,7 +19,7 @@ type Ports struct {
 type PathVars struct {
 	GetByIdParamName string
 }
-type ResponceMessages struct {
+type ResponseMessages struct {
 	ItemNotFoundMessage string
 }
 type Timings struct {
@@ -34,7 +34,7 @@ func NewConfig() *Config {
 		PathVars: PathVars{
 			GetByIdParamName: config.GetByIdParamName,
 		},
-		ResponceMessages: ResponceMessages{
+		ResponseMessages: ResponseMessages{
 			ItemNotFoundMessage: config.ItemNotFoundMessage,
 		},
 		Timings: Timings{

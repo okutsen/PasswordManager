@@ -8,7 +8,7 @@ import (
 )
 
 // FIXME: where to define?
-var server_config = NewConfig()
+var serverConfig = NewConfig()
 
 // log = log.NewLogger()
 
@@ -23,11 +23,11 @@ func NewServer() *Server {
 
 	return &Server{
 		httpServer: &http.Server{
-			// TODO: add host to Addr: ServerHostURL + ":" + server_config.ServerListenPort
-			Addr:         ":" + server_config.ServerListenPort,
+			// TODO: add host to Addr: ServerHostURL + ":" + serverConfig.ServerListenPort
+			Addr:         ":" + serverConfig.ServerListenPort,
 			Handler:      NewHandler().router,
-			ReadTimeout:  server_config.ReadTimeout,
-			WriteTimeout: server_config.WriteTimeout,
+			ReadTimeout:  serverConfig.ReadTimeout,
+			WriteTimeout: serverConfig.WriteTimeout,
 		},
 		handler: NewHandler(),
 		log:     log.NewLogger(),
