@@ -32,17 +32,33 @@ func (c *API) Start() {
 	c.log.Print("API started")
 	router := httprouter.New()
 	// TODO: add route to config?
-	router.GET("/records", c.getRecords)
-	router.GET(fmt.Sprintf("/records/:%s", apiConfig.GetByIdParamName), c.getRecords)
-	router.POST("/records", c.createRecords)
+	router.GET("/records", c.getRecordsLogger(c.getRecords))
+	router.GET(fmt.Sprintf("/records/:%s", apiConfig.GetByIdParamName), c.getRecordsLogger(c.getRecords))
+	router.POST("/records", c.createRecordsLogger(c.createRecords))
 
 	// TODO: add host to Addr: APIHostURL + ":" + server_config.ServerListenPort
 	c.log.Fatal(http.ListenAndServe(":"+apiConfig.APIListenPort, router))
 }
 
+func (c *API) getRecordsLogger(handler httprouter.Handle) httprouter.Handle {
+	loggedHandler := func(rw http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		c.log.Print("API: Endpoint Hit: getRecords")
+		handler(rw, r, ps)
+	}
+	return loggedHandler
+}
+
+func (c *API) createRecordsLogger(handler httprouter.Handle) httprouter.Handle {
+	loggedHandler := func(rw http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		c.log.Print("API: Endpoint Hit: createRecords")
+		handler(rw, r, ps)
+	}
+	return loggedHandler
+}
+
 // TODO: pass params to model -> validate them and run query with filters
 func (c *API) getRecords(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	c.log.Print("API: Endpoint Hit: getRecords")
+	// c.log.Print("API: Endpoint Hit: getRecords")
 	// TODO: c.serverConnection.Get(config.DomainServerURL + ":" + config.DomainServerPort)
 	idStr := ps.ByName(apiConfig.GetByIdParamName)
 	if idStr == "" {
@@ -69,7 +85,7 @@ func (c *API) getRecords(w http.ResponseWriter, r *http.Request, ps httprouter.P
 
 func (c *API) writeResponse(body string, status int, w http.ResponseWriter) error {
 	w.WriteHeader(status)
-	_, err := fmt.Fprintf(w, body)
+	_, err := fmt.Fprint(w, body)
 	if err != nil {
 		c.log.Print("Error: getRecords: Failed to write responce")
 		return err
