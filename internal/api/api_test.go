@@ -1,4 +1,4 @@
-package internal
+package api
 
 import (
 	"net/http"
@@ -23,11 +23,11 @@ type TableTests struct {
 	tt         []*TableTest // by pointer or not?
 	httpMethod string
 	httpPath   string
-	httpServer *ClientAPI
+	httpServer *API
 	handler    HandlerFunc
 }
 
-type HandlerFunc func(*ClientAPI, http.ResponseWriter, *http.Request, httprouter.Params)
+type HandlerFunc func(*API, http.ResponseWriter, *http.Request, httprouter.Params)
 
 func TestGetRecords(t *testing.T) {
 	tests := TableTests{
@@ -59,8 +59,8 @@ func TestGetRecords(t *testing.T) {
 
 		httpMethod: http.MethodPost,
 		httpPath:   "/records/",
-		httpServer: NewClientAPI(),
-		handler:    (*ClientAPI).getRecords,
+		httpServer: NewAPI(),
+		handler:    (*API).getRecords,
 	}
 	TableTestRunner(t, tests)
 }
@@ -76,8 +76,8 @@ func TestPostRecords(t *testing.T) {
 
 		httpMethod: http.MethodPost,
 		httpPath:   "/records/",
-		httpServer: NewClientAPI(),
-		handler:    (*ClientAPI).createRecords,
+		httpServer: NewAPI(),
+		handler:    (*API).createRecords,
 	}
 	TableTestRunner(t, tests)
 }
@@ -88,7 +88,7 @@ func TableTestRunner(t *testing.T, tt TableTests) {
 		t.Run(test.name, func(t *testing.T) {
 			request := httptest.NewRequest(tt.httpMethod, tt.httpPath+test.httpPathParam, nil)
 			response := httptest.NewRecorder()
-			ps := httprouter.Params{httprouter.Param{Key: getByIdParamName, Value: test.httpPathParam}}
+			ps := httprouter.Params{httprouter.Param{Key: api_config.GetByIdParamName, Value: test.httpPathParam}}
 			tt.handler(tt.httpServer, response, request, ps)
 
 			assert(t, response.Code, test.expectedHTTPStatus, "Wrong status")

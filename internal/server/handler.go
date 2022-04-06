@@ -1,15 +1,16 @@
-package internal
+package server
 
 import (
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
+	"github.com/okutsen/PasswordManager/internal/log"
 )
 
 // TODO: rename because router is Handler
 type Handler struct {
 	router *httprouter.Router
-	log    Logger
+	log    log.Logger
 }
 
 func NewHandler() *Handler {

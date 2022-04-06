@@ -1,4 +1,4 @@
-package internal
+package log
 
 import (
 	"io"
@@ -6,6 +6,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// TODO: add metrics
 type Logger interface {
 	Fatal(v ...any)
 	Fatalf(format string, v ...any)
