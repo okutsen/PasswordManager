@@ -1,32 +1,29 @@
 package log
 
-import (
-	"io"
-
-	"github.com/sirupsen/logrus"
-)
-
 // TODO: add metrics
 
-type Logger interface {
-	Fatal(v ...any)
-	Fatalf(format string, v ...any)
-	Fatalln(v ...any)
-	Panic(v ...any)
-	Panicf(format string, v ...any)
-	Panicln(v ...any)
-	Print(v ...any)
-	Printf(format string, v ...any)
-	Println(v ...any)
-	SetOutput(w io.Writer)
+type Logger interface{
+	BaseLogger
+	Info(args ...interface{})
+	Infof(format string, args ...interface{})
+	Warn(args ...interface{})
+	Warnf(format string, args ...interface{})
+	Error(args ...interface{})
+	Errorf(format string, args ...interface{})
 }
 
-// type BaseLogger struct {
-// 	 TODO: save created loggers
-// 	 loggers []Logger
+type BaseLogger interface {
+	Fatal(v ...interface{})
+	Fatalf(format string, v ...interface{})
+	Panic(v ...interface{})
+	Panicf(format string, v ...interface{})
+	Print(v ...interface{})
+	Printf(format string, v ...interface{})
+}
+
+// type LoggerWithContext struct {
+// 	logger Logger
+// 	context context.Context
 // }
-// TODO: method of BaseLogger
 
-func NewLogger() Logger {
-	return logrus.New()
-}
+// func (lwc *LoggerWithContext) 
