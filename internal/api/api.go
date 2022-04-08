@@ -40,7 +40,7 @@ func (c *API) Start() error {
 
 func (c *API) endpointLogger(handler httprouter.Handle) httprouter.Handle {
 	loggedHandler := func(rw http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		c.log.Infof("API: Endpoint Hit: %s%s with method %s\n", r.Host, r.URL.Path, r.Method)
+		c.log.Infof("API: Endpoint Hit: %s %s%s\n", r.Host, r.URL.Path, r.Method)
 		handler(rw, r, ps)
 	}
 	return loggedHandler
