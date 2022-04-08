@@ -16,13 +16,13 @@ const (
 )
 
 type API struct {
-	port string
+	config *Config
 	log  log.Logger
 }
 
 func New(config *Config, log log.Logger) *API {
 	return &API{
-		port: config.APIListenPort,
+		config: config,
 		log:  log,
 	}
 }
@@ -35,7 +35,7 @@ func (c *API) Start() error {
 	router.GET(fmt.Sprintf("/records/:%s", IDParamName), c.endpointLogger(c.getRecord))
 	router.POST("/records", c.endpointLogger(c.createRecords))
 
-	return http.ListenAndServe(":"+c.port, router)
+	return http.ListenAndServe(c.config.Host+":"+c.config.Port, router)
 }
 
 func (c *API) endpointLogger(handler httprouter.Handle) httprouter.Handle {

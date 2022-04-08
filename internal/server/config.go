@@ -3,7 +3,6 @@ package server
 import (
 	"time"
 
-	"github.com/okutsen/PasswordManager/config"
 )
 
 type Config struct {
@@ -21,12 +20,5 @@ type Timings struct {
 
 func NewConfig() *Config {
 	return &Config{
-		Ports: Ports{
-			ServerListenPort: config.ServerListenPort,
-		},
-		Timings: Timings{
-			ReadTimeout:  config.ReadTimeout,
-			WriteTimeout: config.WriteTimeout,
-		},
 	}
 }
