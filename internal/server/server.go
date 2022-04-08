@@ -30,7 +30,6 @@ func NewServer() *Server {
 			WriteTimeout: serverConfig.WriteTimeout,
 		},
 		handler: NewHandler(),
-		log:     log.NewLogger(),
 	}
 }
 

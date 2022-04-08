@@ -1,10 +1,15 @@
 package main
 
-import "github.com/okutsen/PasswordManager/internal/api"
+import (
+	"github.com/okutsen/PasswordManager/internal/api"
+	"github.com/okutsen/PasswordManager/internal/log"
+	"github.com/sirupsen/logrus"
+)
 
 // TODO: password tips or reset questions
 
 func main() {
-	api := api.NewAPI()
+	var log log.Logger = logrus.New() 
+	api := api.NewAPI(log)
 	api.Start()
 }

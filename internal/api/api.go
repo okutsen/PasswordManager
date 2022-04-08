@@ -19,12 +19,12 @@ type API struct {
 	log              log.Logger
 }
 
-func NewAPI() *API {
+func NewAPI(logger log.Logger) *API {
 	return &API{
 		serverConnection: &http.Client{
 			Timeout: apiConfig.APIRequestTimeout,
 		},
-		log: log.NewLogger(),
+		log: logger,
 	}
 }
 
