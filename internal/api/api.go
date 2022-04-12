@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/julienschmidt/httprouter"
+
 	"github.com/okutsen/PasswordManager/internal/log"
 )
 
