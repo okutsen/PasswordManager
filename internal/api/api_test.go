@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/julienschmidt/httprouter"
+	"github.com/okutsen/PasswordManager/internal/log"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -30,6 +32,7 @@ type TableTests struct {
 type HandlerFunc func(*API, http.ResponseWriter, *http.Request, httprouter.Params)
 
 func TestGetRecords(t *testing.T) {
+	var logger log.Logger = logrus.New() 
 	tests := TableTests{
 		tt: []*TableTest{
 			{
@@ -59,13 +62,14 @@ func TestGetRecords(t *testing.T) {
 
 		httpMethod: http.MethodPost,
 		httpPath:   "/records/",
-		httpServer: NewAPI(),
+		httpServer: NewAPI(logger),
 		handler:    (*API).getRecords,
 	}
 	TableTestRunner(t, tests)
 }
 
 func TestPostRecords(t *testing.T) {
+	var logger log.Logger = logrus.New() 
 	tests := TableTests{
 		tt: []*TableTest{
 			{
@@ -76,7 +80,7 @@ func TestPostRecords(t *testing.T) {
 
 		httpMethod: http.MethodPost,
 		httpPath:   "/records/",
-		httpServer: NewAPI(),
+		httpServer: NewAPI(logger),
 		handler:    (*API).createRecords,
 	}
 	TableTestRunner(t, tests)
