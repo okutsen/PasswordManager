@@ -15,73 +15,92 @@ const (
 )
 
 type TableTest struct {
-	name               string
-	httpPathParam      string
+	// Create request for specified
+	testName           string
+	handle            HandlerFunc
+	httpMethod         string
+	httpPath           string
+	ps httprouter.Params
 	expectedHTTPStatus int
 	expectedBody       string
 }
 
 type TableTests struct {
 	tt         []*TableTest // by pointer or not?
-	httpMethod string
-	httpPath   string
 	httpServer *API
-	handler    HandlerFunc
 }
 
 type HandlerFunc func(*API, http.ResponseWriter, *http.Request, httprouter.Params)
 
 func TestGetRecords(t *testing.T) {
-	var logger log.Logger = logrus.New() 
+	var config *Config = NewConfig()
+	var logger log.Logger = logrus.New()
 	tests := TableTests{
 		tt: []*TableTest{
 			{
-				name:               "Get all records",
-				httpPathParam:      "",
+				testName:           "Get all records",
+				handle:            (*API).getAllRecords,
+				httpMethod:         http.MethodGet,
+				httpPath:           "/records/",
 				expectedHTTPStatus: http.StatusOK,
 				expectedBody:       "Records:\n0,1,2,3,4,5",
 			},
 			{
-				name:               "Get record by Name:1",
-				httpPathParam:      "0",
+				testName:           "Get record by id 1",
+				handle:            (*API).getRecord,
+				httpMethod:         http.MethodGet,
+				httpPath:           "/records/0",
+				ps: httprouter.Params{
+					httprouter.Param{Key: IDParamName, Value: "0"},
+				},
 				expectedHTTPStatus: http.StatusOK,
 				expectedBody:       "Records:\n0",
 			},
 			{
-				name:               "Get record by Name:5",
-				httpPathParam:      "5",
+				testName:           "Get record by id 5",
+				handle:            (*API).getRecord,
+				httpMethod:         http.MethodGet,
+				httpPath:           "/records/5",
+				ps: httprouter.Params{
+					httprouter.Param{Key: IDParamName, Value: "5"},
+				},
 				expectedHTTPStatus: http.StatusOK,
 				expectedBody:       "Records:\n5",
 			},
 			{
-				name:               "Returns 404 on missing record",
-				httpPathParam:      "6",
+				testName:           "Returns 404 on missing record",
+				handle:            (*API).getRecord,
+				httpMethod:         http.MethodGet,
+				httpPath:           "/records/6",
+				ps: httprouter.Params{
+					httprouter.Param{Key: IDParamName, Value: "6"},
+				},
 				expectedHTTPStatus: http.StatusBadRequest,
 				expectedBody:       "Record not found",
 			}},
 
-		httpMethod: http.MethodPost,
-		httpPath:   "/records/",
-		httpServer: NewAPI(logger),
-		handler:    (*API).getRecords,
+		// TODO: use mocks
+		httpServer: New(config, logger),
 	}
 	TableTestRunner(t, tests)
 }
 
 func TestPostRecords(t *testing.T) {
+	var config *Config = NewConfig()
 	var logger log.Logger = logrus.New() 
 	tests := TableTests{
 		tt: []*TableTest{
 			{
-				name:               "Post record",
+				testName:           "Post record",
 				expectedHTTPStatus: http.StatusAccepted,
 				expectedBody:       "New Record created",
+				handle:            (*API).createRecords,
+				httpMethod:         http.MethodPost,
+				httpPath:           "/records/",
 			}},
 
-		httpMethod: http.MethodPost,
-		httpPath:   "/records/",
-		httpServer: NewAPI(logger),
-		handler:    (*API).createRecords,
+		// TODO: use mocks
+		httpServer: New(config, logger),
 	}
 	TableTestRunner(t, tests)
 }
@@ -89,11 +108,10 @@ func TestPostRecords(t *testing.T) {
 func TableTestRunner(t *testing.T, tt TableTests) {
 	t.Helper()
 	for _, test := range tt.tt {
-		t.Run(test.name, func(t *testing.T) {
-			request := httptest.NewRequest(tt.httpMethod, tt.httpPath+test.httpPathParam, nil)
+		t.Run(test.testName, func(t *testing.T) {
+			request := httptest.NewRequest(test.httpMethod, test.httpPath, nil)
 			response := httptest.NewRecorder()
-			ps := httprouter.Params{httprouter.Param{Key: apiConfig.GetByIdParamName, Value: test.httpPathParam}}
-			tt.handler(tt.httpServer, response, request, ps)
+			test.handle(tt.httpServer, response, request, test.ps)
 
 			assert(t, response.Code, test.expectedHTTPStatus, "Wrong status")
 			assert(t, response.Body.String(), test.expectedBody, "Wrong body")

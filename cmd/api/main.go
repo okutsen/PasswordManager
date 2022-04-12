@@ -9,7 +9,8 @@ import (
 // TODO: password tips or reset questions
 
 func main() {
+	var config *api.Config = api.NewConfig()
 	var log log.Logger = logrus.New() 
-	api := api.NewAPI(log)
+	api := api.New(config, log)
 	api.Start()
 }
