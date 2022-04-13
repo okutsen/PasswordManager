@@ -33,7 +33,10 @@ type TableTests struct {
 type HandlerFunc func(*API, http.ResponseWriter, *http.Request, httprouter.Params)
 
 func TestGetRecords(t *testing.T) {
-	var config *Config = NewConfig()
+	config, err := NewConfig()
+	if err != nil {
+		t.Errorf("Failed to read config: %s", err.Error())
+	}
 	var logger log.Logger = logrus.New()
 	tests := TableTests{
 		tt: []*TableTest{
@@ -86,7 +89,10 @@ func TestGetRecords(t *testing.T) {
 }
 
 func TestPostRecords(t *testing.T) {
-	var config *Config = NewConfig()
+	config, err := NewConfig()
+	if err != nil {
+		t.Errorf("Failed to read config: %s", err.Error())
+	}
 	var logger log.Logger = logrus.New() 
 	tests := TableTests{
 		tt: []*TableTest{
