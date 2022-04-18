@@ -7,19 +7,24 @@ import (
 
 // TODO: add metrics
 type Logger interface{
-	Fatal(v ...any)
-	Fatalf(format string, v ...any)
-	Panic(v ...any)
-	Panicf(format string, v ...any)
-	Print(v ...any)
-	Printf(format string, v ...any)
 	Info(args ...any)
 	Infof(format string, args ...any)
 	Warn(args ...any)
 	Warnf(format string, args ...any)
 	Error(args ...any)
 	Errorf(format string, args ...any)
+	Fatal(v ...any)
+	Fatalf(format string, v ...any)
 }
+
+type BaseLogger struct {
+	
+}
+
+
+
+
+
 
 type Fields map[string]any
 
