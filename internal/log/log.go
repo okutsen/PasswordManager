@@ -1,12 +1,10 @@
 package log
 
-import (
-	"bytes"
-	"fmt"
-)
+import "github.com/sirupsen/logrus"
 
-// TODO: add metrics
-type Logger interface{
+// create BaseLogger in separate file
+// rename this to logrus_wrapper file
+type Logger interface {
 	Info(args ...any)
 	Infof(format string, args ...any)
 	Warn(args ...any)
@@ -15,79 +13,44 @@ type Logger interface{
 	Errorf(format string, args ...any)
 	Fatal(v ...any)
 	Fatalf(format string, v ...any)
+	WithFields(fields logrus.Fields) *logrus.Entry
 }
 
-type BaseLogger struct {
-	
+// TODO: configure for logrus
+func NewLogrusLogger() Logger {
+	return &LogrusLogger{
+		logger: logrus.New(),
+	}
 }
 
-
-
-
-
-
-type Fields map[string]any
-
-type LoggerWithContext struct {
+type LogrusLogger struct {
 	logger Logger
-	fields Fields
-	prefix string
-	sep string
 }
 
-func NewWithFields(logger Logger) *LoggerWithContext {
-	return &LoggerWithContext{
-		logger: logger,
-		prefix: " ",
-		sep: "\t",
-	}
+func (l *LogrusLogger) Info(args ...any) {
+	l.logger.Info(args...)
 }
-
-func (lwc *LoggerWithContext) SetPrefix(prefix string) {
-	lwc.prefix = prefix
+func (l *LogrusLogger) Infof(format string, args ...any) {
+	l.logger.Infof(format, args...)
 }
-
-func (lwc *LoggerWithContext) SetSep(sep string) {
-	lwc.sep = sep
+func (l *LogrusLogger) Warn(args ...any) {
+	l.logger.Warn(args...)
 }
-
-func (lwc *LoggerWithContext) WithFields(fields Fields) *LoggerWithContext {
-	lwc.addFields(fields)
-	return lwc
+func (l *LogrusLogger) Warnf(format string, args ...any) {
+	l.logger.Warnf(format, args...)
 }
-
-// to pkg?
-func (lwc *LoggerWithContext) addFields(f Fields) {
-	// concat maps?
-	for k, v := range f {
-		lwc.fields[k] = v
-	}
+func (l *LogrusLogger) Error(args ...any) {
+	l.logger.Error(args...)
 }
-
-func (lwc *LoggerWithContext) ComposeMessage(v []any) string {
-	return lwc.composeMessage(fmt.Sprint(v...))
+func (l *LogrusLogger) Errorf(format string, args ...any) {
+	l.logger.Errorf(format, args...)
 }
-
-func (lwc *LoggerWithContext) ComposeMessagef(format string, v []any) string {
-	return lwc.composeMessage(fmt.Sprintf(format, v...))
+func (l *LogrusLogger) Fatal(args ...any) {
+	l.logger.Fatal(args...)
 }
-
-// to pkg?
-func (lwc *LoggerWithContext) composeMessage(initial string) string {
-	var buff bytes.Buffer
-	buff.WriteString(initial)
-	buff.WriteString(lwc.prefix)
-    for key, value := range lwc.fields {
-        fmt.Fprintf(&buff, "%s%s=%v", lwc.sep, key, value)
-    }
-    return buff.String()
+func (l *LogrusLogger) Fatalf(format string, args ...any) {
+	l.logger.Fatalf(format, args...)
 }
-
-// any way not to override every method? 
-func (lwc *LoggerWithContext) Print(v ...any) {
-	lwc.logger.Info(lwc.ComposeMessage(v))
-}
-
-func (lwc *LoggerWithContext) Printf(format string, v ...any) {
-	lwc.logger.Info(lwc.ComposeMessagef(format, v))
+func (l *LogrusLogger) WithFields(fields logrus.Fields) *logrus.Entry {
+	return l.logger.WithFields(fields)
 }
