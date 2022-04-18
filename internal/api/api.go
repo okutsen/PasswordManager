@@ -11,20 +11,20 @@ import (
 )
 
 const (
-	IDParamName    = "recordName"
+	IDParamName           = "recordName"
 	RecordNotFoundMessage = "Item not found"
-	RecordCreatedMessage = "Record created"
+	RecordCreatedMessage  = "Record created"
 )
 
 type API struct {
 	config *Config
-	log  log.Logger
+	log    log.Logger
 }
 
 func New(config *Config, log log.Logger) *API {
 	return &API{
 		config: config,
-		log:  log,
+		log:    log,
 	}
 }
 
@@ -44,13 +44,13 @@ func (c *API) Start() error {
 	router.GET(fmt.Sprintf("/records/:%s", IDParamName), c.endpointLogger(c.getRecord))
 	router.POST("/records", c.endpointLogger(c.createRecords))
 
-	return http.ListenAndServe(c.config.Host+":"+c.config.Port, router)
+	return http.ListenAndServe(":"+c.config.Port, router)
 }
 
 func (c *API) getAllRecords(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	responseBody := "Records:\n0,1,2,3,4,5"
 	err := c.writeResponse(responseBody, http.StatusOK, w)
-	c.log.Errorf("getAllRecords: Failed to write responce: %s", err.Error())
+	c.log.Errorf("getAllRecords: Failed to write response: %s", err.Error())
 
 	// TODO: write JSON response
 }
@@ -66,14 +66,14 @@ func (c *API) getRecord(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 	}
 	responseBody := fmt.Sprintf("Records:\n%d", idInt)
 	err = c.writeResponse(responseBody, http.StatusOK, w)
-	c.log.Errorf("getRecord: Failed to write responce: %s", err.Error())
+	c.log.Errorf("getRecord: Failed to write response: %s", err.Error())
 
 	// TODO: write JSON response
 }
 
 func (c *API) createRecords(w http.ResponseWriter, _ *http.Request, _ httprouter.Params) {
 	err := c.writeResponse(RecordCreatedMessage, http.StatusAccepted, w)
-	c.log.Errorf("createRecords: Failed to write responce: %s", err.Error())
+	c.log.Errorf("createRecords: Failed to write response: %s", err.Error())
 
 	// TODO: parse JSON input
 }
