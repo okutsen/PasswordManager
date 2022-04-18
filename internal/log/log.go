@@ -1,7 +1,5 @@
 package log
 
-import "github.com/sirupsen/logrus"
-
 // create BaseLogger in separate file
 // rename this to logrus_wrapper file
 type Logger interface {
@@ -13,44 +11,7 @@ type Logger interface {
 	Errorf(format string, args ...any)
 	Fatal(v ...any)
 	Fatalf(format string, v ...any)
-	WithFields(fields logrus.Fields) *logrus.Entry
+	WithFields(fields Fields) Logger
 }
+type Fields map[string]any
 
-// TODO: configure for logrus
-func NewLogrusLogger() Logger {
-	return &LogrusLogger{
-		logger: logrus.New(),
-	}
-}
-
-type LogrusLogger struct {
-	logger Logger
-}
-
-func (l *LogrusLogger) Info(args ...any) {
-	l.logger.Info(args...)
-}
-func (l *LogrusLogger) Infof(format string, args ...any) {
-	l.logger.Infof(format, args...)
-}
-func (l *LogrusLogger) Warn(args ...any) {
-	l.logger.Warn(args...)
-}
-func (l *LogrusLogger) Warnf(format string, args ...any) {
-	l.logger.Warnf(format, args...)
-}
-func (l *LogrusLogger) Error(args ...any) {
-	l.logger.Error(args...)
-}
-func (l *LogrusLogger) Errorf(format string, args ...any) {
-	l.logger.Errorf(format, args...)
-}
-func (l *LogrusLogger) Fatal(args ...any) {
-	l.logger.Fatal(args...)
-}
-func (l *LogrusLogger) Fatalf(format string, args ...any) {
-	l.logger.Fatalf(format, args...)
-}
-func (l *LogrusLogger) WithFields(fields logrus.Fields) *logrus.Entry {
-	return l.logger.WithFields(fields)
-}
