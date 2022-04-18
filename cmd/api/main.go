@@ -12,7 +12,7 @@ func main() {
 	config, err := api.NewConfig()
 	if err != nil {
 		// TODO: Use default values to configure api
-		logger.Fatalf("failed to initialize config: %v", err)
+		logger.Fatalf("Failed to initialize config: %s", err.Error())
 	}
 	serviceAPI := api.New(config, logger)
 	err = serviceAPI.Start()
