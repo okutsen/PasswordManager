@@ -27,9 +27,9 @@ func (h *Handler) setupRouter() {
 }
 
 func (h *Handler) getRecords(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	h.log.Print("DomainServer: Endpoint Hit: getRecords")
+	h.log.Info("DomainServer: Endpoint Hit: getRecords")
 }
 
 func (h *Handler) createRecords(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	h.log.Print("DomainServer: Endpoint Hit: createRecords")
+	h.log.Info("DomainServer: Endpoint Hit: createRecords")
 }

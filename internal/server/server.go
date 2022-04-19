@@ -34,7 +34,7 @@ func NewServer() *Server {
 }
 
 func (d *Server) Start() {
-	d.log.Print("Server started")
+	d.log.Info("Server started")
 
 	if err := d.httpServer.ListenAndServe(); err != nil {
 		_ = d.httpServer.Shutdown(context.TODO())

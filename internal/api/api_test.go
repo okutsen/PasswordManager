@@ -7,7 +7,6 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/okutsen/PasswordManager/internal/log"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -35,9 +34,9 @@ type HandlerFunc func(*API, http.ResponseWriter, *http.Request, httprouter.Param
 func TestGetRecords(t *testing.T) {
 	config, err := NewConfig()
 	if err != nil {
-		t.Errorf("Failed to read config: %s", err.Error())
+		t.Errorf("Failed to initialize config: %s", err.Error())
 	}
-	var logger log.Logger = logrus.New()
+	var logger log.Logger = log.NewLogrusLogger()
 	tests := TableTests{
 		tt: []*TableTest{
 			{
@@ -93,7 +92,7 @@ func TestPostRecords(t *testing.T) {
 	if err != nil {
 		t.Errorf("Failed to read config: %s", err.Error())
 	}
-	var logger log.Logger = logrus.New() 
+	var logger log.Logger = log.NewLogrusLogger()
 	tests := TableTests{
 		tt: []*TableTest{
 			{
