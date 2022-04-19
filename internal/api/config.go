@@ -3,26 +3,19 @@ package api
 import (
 	"fmt"
 
-	"github.com/spf13/viper"
+	"github.com/okutsen/PasswordManager/config"
 )
 
 type Config struct {
 	Host string
-	Port string
+	Port uint
+	Addr string
 }
 
-func initConfig() error {
-	viper.AddConfigPath("config")
-	viper.SetConfigName("config")
-	return viper.ReadInConfig()
-}
-
-func NewConfig() (*Config, error) {
-	if err := initConfig(); err != nil {
-		return nil, fmt.Errorf("failed to init config: %w", err)
-	}
+func NewConfig(cfg *config.Config) *Config {
 	return &Config{
-		Host: viper.GetString("host"),
-		Port: viper.GetString("port"),
-	}, nil
+		Host: cfg.Host,
+		Port: cfg.Port,
+		Addr: fmt.Sprint(cfg.Host, ":", cfg.Port),
+	}
 }
