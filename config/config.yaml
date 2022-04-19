@@ -1,2 +1,2 @@
-host: "http://localhost"
+host: "localhost"
 port: "10000"
