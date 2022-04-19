@@ -28,51 +28,52 @@ func New(config *Config, log log.Logger) *API {
 	}
 }
 
-func (c *API) endpointLogger(handler httprouter.Handle) httprouter.Handle {
+func (api *API) endpointLogger(handler httprouter.Handle) httprouter.Handle {
 	loggedHandler := func(rw http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		c.log.Infof("API: Endpoint Hit: %s %s%s\n", r.Host, r.URL.Path, r.Method)
+		api.log.Infof("API: Endpoint Hit: %s %s%s\n", r.Host, r.URL.Path, r.Method)
 		handler(rw, r, ps)
 	}
 	return loggedHandler
 }
 
-func (c *API) Start() error {
-	c.log.Info("API started")
+func (api *API) Start() error {
+	api.log.Info("API started")
 	router := httprouter.New()
 
-	router.GET("/records", c.endpointLogger(c.getAllRecords))
-	router.GET(fmt.Sprintf("/records/:%s", IDParamName), c.endpointLogger(c.getRecord))
-	router.POST("/records", c.endpointLogger(c.createRecords))
+	router.GET("/records", api.endpointLogger(api.getAllRecords))
+	router.GET(fmt.Sprintf("/records/:%s", IDParamName), api.endpointLogger(api.getRecord))
+	router.POST("/records", api.endpointLogger(api.createRecords))
 
-	return http.ListenAndServe(c.config.Addr, router)
+	return http.ListenAndServe(api.config.Addr, router)
 }
 
-func (c *API) getAllRecords(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (api *API) getAllRecords(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	// contextLogger := api.
 	responseBody := "Records:\n0,1,2,3,4,5"
-	err := c.writeResponse(responseBody, http.StatusOK, w)
+	err := api.writeResponse(responseBody, http.StatusOK, w)
 	if err != nil {
-		c.log.Errorf("getAllRecords: Failed to write response: %s", err.Error())
+		api.log.Errorf("getAllRecords: Failed to write response: %s", err.Error())
 	}
 
 	// TODO: write JSON response
 }
 
-func (c *API) getRecord(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (api *API) getRecord(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	idStr := ps.ByName(IDParamName)
 	// TODO: convert to correct type (uint)
 	idInt, err := strconv.Atoi(idStr)
 	if err != nil {
-		c.log.Errorf("getRecord: Failed to convert path parameter id: %s", err.Error())
-		err := c.writeResponse(RecordNotFoundMessage, http.StatusBadRequest, w)
+		api.log.Errorf("getRecord: Failed to convert path parameter id: %s", err.Error())
+		err := api.writeResponse(RecordNotFoundMessage, http.StatusBadRequest, w)
 		if err != nil {
-			c.log.Errorf("getRecord: Failed to write response: %s", err.Error())
+			api.log.Errorf("getRecord: Failed to write response: %s", err.Error())
 		}
 		return
 	}
 	responseBody := fmt.Sprintf("Records:\n%d", idInt)
-	err = c.writeResponse(responseBody, http.StatusOK, w)
+	err = api.writeResponse(responseBody, http.StatusOK, w)
 	if err != nil {
-		c.log.Errorf("getRecord: Failed to write response: %s", err.Error())
+		api.log.Errorf("getRecord: Failed to write response: %s", err.Error())
 	}
 
 	// TODO: write JSON response
@@ -87,12 +88,12 @@ func (c *API) createRecords(w http.ResponseWriter, _ *http.Request, _ httprouter
 	// TODO: parse JSON input
 }
 
-func (c *API) writeResponse(body string, status int, w http.ResponseWriter) error {
+func (api *API) writeResponse(body string, status int, w http.ResponseWriter) error {
 	w.WriteHeader(status)
 	_, err := fmt.Fprint(w, body)
 	if err != nil {
 		return err
 	}
-	c.log.Infof("Response written\n%s", body)
+	api.log.Infof("Response written\n%s", body)
 	return nil
 }
