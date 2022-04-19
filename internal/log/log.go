@@ -14,4 +14,3 @@ type Logger interface {
 	WithFields(fields Fields) Logger
 }
 type Fields map[string]any
-

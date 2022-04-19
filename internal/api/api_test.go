@@ -16,10 +16,10 @@ const (
 type TableTest struct {
 	// Create request for specified
 	testName           string
-	handle            HandlerFunc
+	handle             HandlerFunc
 	httpMethod         string
 	httpPath           string
-	ps httprouter.Params
+	ps                 httprouter.Params
 	expectedHTTPStatus int
 	expectedBody       string
 }
@@ -41,17 +41,17 @@ func TestGetRecords(t *testing.T) {
 		tt: []*TableTest{
 			{
 				testName:           "Get all records",
-				handle:            (*API).getAllRecords,
+				handle:             (*API).getAllRecords,
 				httpMethod:         http.MethodGet,
 				httpPath:           "/records/",
 				expectedHTTPStatus: http.StatusOK,
 				expectedBody:       "Records:\n0,1,2,3,4,5",
 			},
 			{
-				testName:           "Get record by id 1",
-				handle:            (*API).getRecord,
-				httpMethod:         http.MethodGet,
-				httpPath:           "/records/0",
+				testName:   "Get record by id 1",
+				handle:     (*API).getRecord,
+				httpMethod: http.MethodGet,
+				httpPath:   "/records/0",
 				ps: httprouter.Params{
 					httprouter.Param{Key: IDParamName, Value: "0"},
 				},
@@ -59,10 +59,10 @@ func TestGetRecords(t *testing.T) {
 				expectedBody:       "Records:\n0",
 			},
 			{
-				testName:           "Get record by id 5",
-				handle:            (*API).getRecord,
-				httpMethod:         http.MethodGet,
-				httpPath:           "/records/5",
+				testName:   "Get record by id 5",
+				handle:     (*API).getRecord,
+				httpMethod: http.MethodGet,
+				httpPath:   "/records/5",
 				ps: httprouter.Params{
 					httprouter.Param{Key: IDParamName, Value: "5"},
 				},
@@ -70,10 +70,10 @@ func TestGetRecords(t *testing.T) {
 				expectedBody:       "Records:\n5",
 			},
 			{
-				testName:           "Returns 404 on missing record",
-				handle:            (*API).getRecord,
-				httpMethod:         http.MethodGet,
-				httpPath:           "/records/6",
+				testName:   "Returns 404 on missing record",
+				handle:     (*API).getRecord,
+				httpMethod: http.MethodGet,
+				httpPath:   "/records/6",
 				ps: httprouter.Params{
 					httprouter.Param{Key: IDParamName, Value: "6"},
 				},
@@ -99,7 +99,7 @@ func TestPostRecords(t *testing.T) {
 				testName:           "Post record",
 				expectedHTTPStatus: http.StatusAccepted,
 				expectedBody:       "New Record created",
-				handle:            (*API).createRecords,
+				handle:             (*API).createRecords,
 				httpMethod:         http.MethodPost,
 				httpPath:           "/records/",
 			}},
