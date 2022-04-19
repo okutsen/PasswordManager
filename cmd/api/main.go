@@ -1,8 +1,6 @@
 package main
 
 import (
-	"github.com/sirupsen/logrus"
-
 	"github.com/okutsen/PasswordManager/internal/api"
 	"github.com/okutsen/PasswordManager/internal/log"
 )
@@ -10,11 +8,11 @@ import (
 // TODO: password tips or reset questions
 
 func main() {
-	var logger log.Logger = logrus.New()
+	var logger log.Logger = log.NewLogrusLogger()
 	config, err := api.NewConfig()
 	if err != nil {
 		// TODO: Use default values to configure api
-		logger.Fatalf("failed to initialize config: %v", err)
+		logger.Fatalf("Failed to initialize config: %s", err.Error())
 	}
 	serviceAPI := api.New(config, logger)
 	err = serviceAPI.Start()

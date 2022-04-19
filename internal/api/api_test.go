@@ -7,7 +7,6 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/okutsen/PasswordManager/internal/log"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -17,10 +16,10 @@ const (
 type TableTest struct {
 	// Create request for specified
 	testName           string
-	handle            HandlerFunc
+	handle             HandlerFunc
 	httpMethod         string
 	httpPath           string
-	ps httprouter.Params
+	ps                 httprouter.Params
 	expectedHTTPStatus int
 	expectedBody       string
 }
@@ -35,24 +34,24 @@ type HandlerFunc func(*API, http.ResponseWriter, *http.Request, httprouter.Param
 func TestGetRecords(t *testing.T) {
 	config, err := NewConfig()
 	if err != nil {
-		t.Errorf("Failed to read config: %s", err.Error())
+		t.Errorf("Failed to initialize config: %s", err.Error())
 	}
-	var logger log.Logger = logrus.New()
+	var logger log.Logger = log.NewLogrusLogger()
 	tests := TableTests{
 		tt: []*TableTest{
 			{
 				testName:           "Get all records",
-				handle:            (*API).getAllRecords,
+				handle:             (*API).getAllRecords,
 				httpMethod:         http.MethodGet,
 				httpPath:           "/records/",
 				expectedHTTPStatus: http.StatusOK,
 				expectedBody:       "Records:\n0,1,2,3,4,5",
 			},
 			{
-				testName:           "Get record by id 1",
-				handle:            (*API).getRecord,
-				httpMethod:         http.MethodGet,
-				httpPath:           "/records/0",
+				testName:   "Get record by id 1",
+				handle:     (*API).getRecord,
+				httpMethod: http.MethodGet,
+				httpPath:   "/records/0",
 				ps: httprouter.Params{
 					httprouter.Param{Key: IDParamName, Value: "0"},
 				},
@@ -60,10 +59,10 @@ func TestGetRecords(t *testing.T) {
 				expectedBody:       "Records:\n0",
 			},
 			{
-				testName:           "Get record by id 5",
-				handle:            (*API).getRecord,
-				httpMethod:         http.MethodGet,
-				httpPath:           "/records/5",
+				testName:   "Get record by id 5",
+				handle:     (*API).getRecord,
+				httpMethod: http.MethodGet,
+				httpPath:   "/records/5",
 				ps: httprouter.Params{
 					httprouter.Param{Key: IDParamName, Value: "5"},
 				},
@@ -71,10 +70,10 @@ func TestGetRecords(t *testing.T) {
 				expectedBody:       "Records:\n5",
 			},
 			{
-				testName:           "Returns 404 on missing record",
-				handle:            (*API).getRecord,
-				httpMethod:         http.MethodGet,
-				httpPath:           "/records/6",
+				testName:   "Returns 404 on missing record",
+				handle:     (*API).getRecord,
+				httpMethod: http.MethodGet,
+				httpPath:   "/records/6",
 				ps: httprouter.Params{
 					httprouter.Param{Key: IDParamName, Value: "6"},
 				},
@@ -93,14 +92,14 @@ func TestPostRecords(t *testing.T) {
 	if err != nil {
 		t.Errorf("Failed to read config: %s", err.Error())
 	}
-	var logger log.Logger = logrus.New() 
+	var logger log.Logger = log.NewLogrusLogger()
 	tests := TableTests{
 		tt: []*TableTest{
 			{
 				testName:           "Post record",
 				expectedHTTPStatus: http.StatusAccepted,
 				expectedBody:       "New Record created",
-				handle:            (*API).createRecords,
+				handle:             (*API).createRecords,
 				httpMethod:         http.MethodPost,
 				httpPath:           "/records/",
 			}},

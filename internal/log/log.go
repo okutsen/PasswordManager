@@ -1,29 +1,16 @@
 package log
 
-// TODO: add metrics
-
-type Logger interface{
-	BaseLogger
-	Info(args ...interface{})
-	Infof(format string, args ...interface{})
-	Warn(args ...interface{})
-	Warnf(format string, args ...interface{})
-	Error(args ...interface{})
-	Errorf(format string, args ...interface{})
+// create BaseLogger in separate file
+// rename this to logrus_wrapper file
+type Logger interface {
+	Info(args ...any)
+	Infof(format string, args ...any)
+	Warn(args ...any)
+	Warnf(format string, args ...any)
+	Error(args ...any)
+	Errorf(format string, args ...any)
+	Fatal(v ...any)
+	Fatalf(format string, v ...any)
+	WithFields(fields Fields) Logger
 }
-
-type BaseLogger interface {
-	Fatal(v ...interface{})
-	Fatalf(format string, v ...interface{})
-	Panic(v ...interface{})
-	Panicf(format string, v ...interface{})
-	Print(v ...interface{})
-	Printf(format string, v ...interface{})
-}
-
-// type LoggerWithContext struct {
-// 	logger Logger
-// 	context context.Context
-// }
-
-// func (lwc *LoggerWithContext) 
+type Fields map[string]any
