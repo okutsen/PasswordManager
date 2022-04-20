@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/julienschmidt/httprouter"
+
+	"github.com/okutsen/PasswordManager/config"
 	"github.com/okutsen/PasswordManager/internal/log"
 )
 
@@ -32,11 +34,11 @@ type TableTests struct {
 type HandlerFunc func(*API, http.ResponseWriter, *http.Request, httprouter.Params)
 
 func TestGetRecords(t *testing.T) {
-	config, err := NewConfig()
+	globalConfig, err := config.NewConfig("testdata/config.yaml")
 	if err != nil {
 		t.Errorf("Failed to initialize config: %s", err.Error())
 	}
-	var logger log.Logger = log.NewLogrusLogger()
+	logger := log.NewLogrusLogger()
 	tests := TableTests{
 		tt: []*TableTest{
 			{
@@ -73,22 +75,22 @@ func TestGetRecords(t *testing.T) {
 				testName:   "Returns 404 on missing record",
 				handle:     (*API).getRecord,
 				httpMethod: http.MethodGet,
-				httpPath:   "/records/6",
+				httpPath:   "/records/a",
 				ps: httprouter.Params{
-					httprouter.Param{Key: IDParamName, Value: "6"},
+					httprouter.Param{Key: IDParamName, Value: "a"},
 				},
 				expectedHTTPStatus: http.StatusBadRequest,
-				expectedBody:       "Record not found",
+				expectedBody:       RecordNotFoundMessage,
 			}},
 
 		// TODO: use mocks
-		httpServer: New(config, logger),
+		httpServer: New(NewConfig(globalConfig), logger),
 	}
 	TableTestRunner(t, tests)
 }
 
 func TestPostRecords(t *testing.T) {
-	config, err := NewConfig()
+	globalConfig, err := config.NewConfig("testdata/config.yaml")
 	if err != nil {
 		t.Errorf("Failed to read config: %s", err.Error())
 	}
@@ -98,14 +100,14 @@ func TestPostRecords(t *testing.T) {
 			{
 				testName:           "Post record",
 				expectedHTTPStatus: http.StatusAccepted,
-				expectedBody:       "New Record created",
+				expectedBody:       RecordCreatedMessage,
 				handle:             (*API).createRecords,
 				httpMethod:         http.MethodPost,
 				httpPath:           "/records/",
 			}},
 
 		// TODO: use mocks
-		httpServer: New(config, logger),
+		httpServer: New(NewConfig(globalConfig), logger),
 	}
 	TableTestRunner(t, tests)
 }
