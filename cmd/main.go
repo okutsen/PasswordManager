@@ -10,12 +10,12 @@ import (
 
 func main() {
 	logger := log.NewLogrusLogger()
-	cfg, err := config.NewConfig("config/config.yaml")
+	_, err := config.NewConfig("config/config.yaml")
 	if err != nil {
 		// TODO: Use default values to configure api
-		logger.Fatal(err)
+		logger.Fatalf("initialize config", err)
 	}
-	apiConfig := api.NewConfig(cfg)
+	apiConfig, err := api.NewConfig("config/config.yaml")
 
 	serviceAPI := api.New(apiConfig, logger)
 	err = serviceAPI.Start()
