@@ -27,13 +27,11 @@ func New(config *Config, log log.Logger) *API {
 	}
 }
 
-func (api *API) endpointLogger(handler httprouter.Handle) httprouter.Handle {
-	loggedHandler := func(rw http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		// TODO: create context logger, get correlationID
-		api.log.Infof("API: Endpoint Hit: %s %s%s\n", r.Host, r.URL.Path, r.Method)
+func (c *API) endpointLogger(handler httprouter.Handle) httprouter.Handle {
+	return func(rw http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		c.log.Infof("API: Endpoint Hit: %s %s%s\n", r.Host, r.URL.Path, r.Method)
 		handler(rw, r, ps)
 	}
-	return loggedHandler
 }
 
 func (api *API) Start() error {
