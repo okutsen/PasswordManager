@@ -7,7 +7,6 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 
-	"github.com/okutsen/PasswordManager/config"
 	"github.com/okutsen/PasswordManager/internal/log"
 )
 
@@ -34,7 +33,7 @@ type TableTests struct {
 type HandlerFunc func(*API, http.ResponseWriter, *http.Request, httprouter.Params)
 
 func TestGetRecords(t *testing.T) {
-	globalConfig, err := config.NewConfig("testdata/config.yaml")
+	apiConfig, err := NewConfig("testdata/config.yaml")
 	if err != nil {
 		t.Errorf("Failed to initialize config: %s", err.Error())
 	}
@@ -84,13 +83,13 @@ func TestGetRecords(t *testing.T) {
 			}},
 
 		// TODO: use mocks
-		httpServer: New(NewConfig(globalConfig), logger),
+		httpServer: New(apiConfig, logger),
 	}
 	TableTestRunner(t, tests)
 }
 
 func TestPostRecords(t *testing.T) {
-	globalConfig, err := config.NewConfig("testdata/config.yaml")
+	apiConfig, err := NewConfig("testdata/config.yaml")
 	if err != nil {
 		t.Errorf("Failed to read config: %s", err.Error())
 	}
@@ -107,7 +106,7 @@ func TestPostRecords(t *testing.T) {
 			}},
 
 		// TODO: use mocks
-		httpServer: New(NewConfig(globalConfig), logger),
+		httpServer: New(apiConfig, logger),
 	}
 	TableTestRunner(t, tests)
 }
