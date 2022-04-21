@@ -1,7 +1,5 @@
 package log
 
-// create BaseLogger in separate file
-// rename this to logrus_wrapper file
 type Logger interface {
 	Info(args ...any)
 	Infof(format string, args ...any)
