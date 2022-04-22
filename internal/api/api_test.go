@@ -33,10 +33,8 @@ type TableTests struct {
 type HandlerFunc func(*API, http.ResponseWriter, *http.Request, httprouter.Params)
 
 func TestGetRecords(t *testing.T) {
-	apiConfig, err := NewConfig("testdata/config.yaml")
-	if err != nil {
-		t.Errorf("Failed to initialize config: %s", err.Error())
-	}
+	apiConfig := &Config{Host: "localhost",
+		Port: 10000}
 	logger := log.NewLogrusLogger()
 	tests := TableTests{
 		tt: []*TableTest{
@@ -89,10 +87,8 @@ func TestGetRecords(t *testing.T) {
 }
 
 func TestPostRecords(t *testing.T) {
-	apiConfig, err := NewConfig("testdata/config.yaml")
-	if err != nil {
-		t.Errorf("Failed to read config: %s", err.Error())
-	}
+	apiConfig := &Config{Host: "localhost",
+		Port: 10000}
 	var logger log.Logger = log.NewLogrusLogger()
 	tests := TableTests{
 		tt: []*TableTest{
