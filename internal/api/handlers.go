@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/julienschmidt/httprouter"
+
 	"github.com/okutsen/PasswordManager/internal/log"
 )
 
@@ -26,7 +27,7 @@ func NewGetRecordHandler(logger log.Logger) httprouter.Handle {
 		// TODO: convert to correct type (uint)
 		idInt, err := strconv.Atoi(idStr)
 		if err != nil {
-			contextLogger.Warnf("Failed to convert path parameter id: %s", err.Error())
+			contextLogger.Warnf("failed to convert path parameter id: %s", err.Error())
 			writeResponse(RecordNotFoundMessage, http.StatusBadRequest, w, contextLogger)
 			return
 		}
@@ -35,8 +36,6 @@ func NewGetRecordHandler(logger log.Logger) httprouter.Handle {
 	}
 }
 
-
-
 func NewCreateRecordsHandler(logger log.Logger) httprouter.Handle {
 	contextLogger := logger.WithFields(log.Fields{"handler": "createRecords"})
 	return func(w http.ResponseWriter, _ *http.Request, _ httprouter.Params) {
@@ -44,13 +43,13 @@ func NewCreateRecordsHandler(logger log.Logger) httprouter.Handle {
 	}
 }
 
-func writeResponse(body string, status int, w http.ResponseWriter, logger log.Logger) error {
+func writeResponse(body string, status int, w http.ResponseWriter, logger log.Logger) {
 	// TODO: write JSON response
 	w.WriteHeader(status)
 	_, err := fmt.Fprint(w, body)
 	if err != nil {
-		return err
+		// TODO: test warning
+		logger.Warnf("failed to write response: %s", err.Error())
 	}
-	logger.Infof("Response written\n%s", body)
-	return nil
+	logger.Infof("response written\n%s", body)
 }
