@@ -43,5 +43,5 @@ func (api *API) Start() error {
 	router.GET(fmt.Sprintf("/records/:%s", IDParamName), api.endpointLogger(NewGetRecordHandler(api.log)))
 	router.POST("/records", api.endpointLogger(NewCreateRecordsHandler(api.log)))
 
-	return http.ListenAndServe(api.config.Addr, router)
+	return http.ListenAndServe(api.config.Address(), router)
 }

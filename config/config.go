@@ -18,7 +18,7 @@ func initConfig(configPath string) error {
 
 func NewConfig(configPath string) (*Config, error) {
 	if err := initConfig(configPath); err != nil {
-		return nil, fmt.Errorf("failed to init config: %w", err)
+		return nil, fmt.Errorf("read config: %w", err)
 	}
 	return &Config{
 		Host: viper.GetString("host"),

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/julienschmidt/httprouter"
+
 	"github.com/okutsen/PasswordManager/internal/log"
 )
 
@@ -15,10 +16,10 @@ const (
 
 type TableTest struct {
 	// Create request for specified
-	testName           string
-	handle             httprouter.Handle
-	httpMethod         string
-	httpPath           string
+	testName   string
+	handle     httprouter.Handle
+	httpMethod string
+	httpPath   string
 	// TODO: constructs params with a func
 	ps                 httprouter.Params
 	expectedHTTPStatus int
@@ -28,8 +29,6 @@ type TableTest struct {
 type TableTests struct {
 	tt []*TableTest
 }
-
-type HandlerFunc func(*API, http.ResponseWriter, *http.Request, httprouter.Params)
 
 func TestGetRecords(t *testing.T) {
 	logger := log.NewLogrusLogger()
@@ -81,7 +80,7 @@ func TestGetRecords(t *testing.T) {
 }
 
 func TestPostRecords(t *testing.T) {
-	var logger log.Logger = log.NewLogrusLogger()
+	logger := log.NewLogrusLogger()
 	tests := TableTests{
 		tt: []*TableTest{
 			{
