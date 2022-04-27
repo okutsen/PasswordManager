@@ -27,9 +27,9 @@ func New(config *Config, log log.Logger) *API {
 	}
 }
 
-func (c *API) endpointLogger(handler httprouter.Handle) httprouter.Handle {
+func (api *API) endpointLogger(handler httprouter.Handle) httprouter.Handle {
 	return func(rw http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		c.log.Infof("API: Endpoint Hit: %s %s%s\n", r.Host, r.URL.Path, r.Method)
+		api.log.Infof("API: Endpoint Hit: %s %s%s\n", r.Host, r.URL.Path, r.Method)
 		handler(rw, r, ps)
 	}
 }
