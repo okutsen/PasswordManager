@@ -6,6 +6,7 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 
+	// "github.com/okutsen/PasswordManager/internal/controller"
 	"github.com/okutsen/PasswordManager/internal/log"
 )
 
@@ -18,6 +19,7 @@ const (
 type API struct {
 	config *Config
 	log    log.Logger
+	// ctrl   controller.Controller
 }
 
 func New(config *Config, log log.Logger) *API {
