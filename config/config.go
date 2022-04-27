@@ -1,8 +1,7 @@
 package config
 
 import (
-	"fmt"
-
+	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
 )
 
@@ -11,17 +10,12 @@ type Config struct {
 	Port uint
 }
 
-func initConfig(configPath string) error {
-	viper.SetConfigFile(configPath)
-	return viper.ReadInConfig()
-}
-
-func NewConfig(configPath string) (*Config, error) {
-	if err := initConfig(configPath); err != nil {
-		return nil, fmt.Errorf("read config: %w", err)
-	}
+func NewConfig() (*Config, error) {
+	err := godotenv.Load("config/.env")
+	viper.SetEnvPrefix("pm")
+	viper.AutomaticEnv()
 	return &Config{
 		Host: viper.GetString("host"),
 		Port: viper.GetUint("port"),
-	}, nil
+	}, err
 }

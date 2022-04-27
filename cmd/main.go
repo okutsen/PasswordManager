@@ -10,9 +10,8 @@ import (
 
 func main() {
 	logger := log.NewLogrusLogger()
-	cfg, err := config.NewConfig("config/config.yaml")
+	cfg, err := config.NewConfig()
 	if err != nil {
-		// TODO: Use default values to configure api
 		logger.Fatalf("initialize config", err)
 	}
 
