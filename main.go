@@ -12,14 +12,16 @@ func main() {
 	logger := log.NewLogrusLogger()
 	cfg, err := config.NewConfig()
 	if err != nil {
-		logger.Fatalf("initialize config", err)
+		logger.Fatalf("initialize config: %v", err)
 	}
 
 	serviceAPI := api.New(&api.Config{
 		Host: cfg.Host,
 		Port: cfg.Port,
 	}, logger)
+
 	err = serviceAPI.Start()
-	// close op objects
-	logger.Fatal(err)
+	if err != nil {
+		logger.Fatal(err)
+	}
 }
