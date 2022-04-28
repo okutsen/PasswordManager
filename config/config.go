@@ -1,8 +1,9 @@
 package config
 
 import (
-	"github.com/joho/godotenv"
-	"github.com/spf13/viper"
+	"fmt"
+
+	"github.com/kelseyhightower/envconfig"
 )
 
 type Config struct {
@@ -11,11 +12,11 @@ type Config struct {
 }
 
 func NewConfig() (*Config, error) {
-	err := godotenv.Load("config/.env")
-	viper.SetEnvPrefix("pm")
-	viper.AutomaticEnv()
-	return &Config{
-		Host: viper.GetString("host"),
-		Port: viper.GetUint("port"),
-	}, err
+	var c Config
+	err := envconfig.Process("pm", &c)
+	if err != nil {
+		return nil, fmt.Errorf("failed to process envconfig: %w", err)
+	}
+
+	return &c, nil
 }
