@@ -7,7 +7,6 @@ import (
 )
 
 type Config struct {
-	Host string
 	Port uint
 }
 

@@ -16,7 +16,6 @@ func main() {
 	}
 
 	serviceAPI := api.New(&api.Config{
-		Host: cfg.Host,
 		Port: cfg.Port,
 	}, logger)
 
