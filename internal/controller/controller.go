@@ -1,31 +1,34 @@
 package controller
 
-import "github.com/okutsen/PasswordManager/internal/log"
+import (
+	"fmt"
 
-type Repo interface {
-	GetAllRecords()
-	GetRecord()
-	CreateRecords()
-}
+	"github.com/okutsen/PasswordManager/internal/log"
+)
 
-type Controller struct {
-	repo Repo
+type ControllerService struct {
+	// repo Repo
 	log  log.Logger
 }
 
-func (c *Controller) GetAllRecords() string {
-	// repo.GetAllRecords()
-	queryResult := "Records:\n0,1,2,3,4,5"
-	return queryResult
+func New(logger log.Logger) *ControllerService{
+	return &ControllerService{
+		log: logger.WithFields(log.Fields{"service": "Controller"}),
+	}
 }
 
-func (c *Controller) GetRecord(id string) string {
-	// 
+func (c *ControllerService) GetAllRecords() (string, error) {
+	// queryResult := repo.GetAllRecords()
 	queryResult := "Records:\n0,1,2,3,4,5"
-	return queryResult
+	return queryResult, nil
 }
 
-func (c *Controller) CreateRecords() string {
-	queryResult := "Records:\n0,1,2,3,4,5"
-	return queryResult
+func (c *ControllerService) GetRecord(id uint) (string, error) {
+	// TODO: pass uuid
+	responseBody := fmt.Sprintf("Records:\n%d", id)
+	return responseBody, nil
+}
+
+func (c *ControllerService) CreateRecords() (string, error) {
+	return "", nil
 }

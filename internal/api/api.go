@@ -16,6 +16,12 @@ const (
 	RecordCreatedMessage  = "Record created"
 )
 
+type Controller interface {
+	GetAllRecords() (string, error)
+	GetRecord(string) (string, error)
+	CreateRecords() (string, error)
+}
+
 type API struct {
 	config *Config
 	log    log.Logger
