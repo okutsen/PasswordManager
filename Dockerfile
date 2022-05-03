@@ -1,25 +1,24 @@
 FROM golang:1.18-alpine3.15 AS build
 
-WORKDIR /github.com/okutsen/PasswordManager
+WORKDIR /PasswordManager
 
 COPY go.mod ./
 COPY go.sum ./
-RUN go mod download
 
-COPY cmd/main.go ./cmd/
-COPY api/*.go ./api/
-COPY pkg/*.go ./pkg/
-COPY internal/*.go ./internal/
 
-RUN cd ./cmd/ && go build -o ../build/out
+COPY cmd/ ./cmd
+COPY internal ./internal
+COPY config ./config
+COPY pkg/ ./pkg
+
+
+RUN go build -o ./bin/pm ./cmd/
+
 
 FROM alpine:3.15 AS release
 
-EXPOSE 10000
+COPY --from=build /PasswordManager/bin/pm /pm
 
-COPY --from=build /github.com/okutsen/PasswordManager/build/out /out
+ENV PM_PORT=10000
 
-ENTRYPOINT [ "/out" ]
-
-# Pass secrets to Docker
-# golangci-lint
+ENTRYPOINT ["/pm"]
