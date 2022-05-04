@@ -7,8 +7,8 @@ COPY go.sum ./
 
 
 COPY cmd/ ./cmd
-COPY internal ./internal
-COPY config ./config
+COPY internal/ ./internal
+COPY config/ ./config
 COPY pkg/ ./pkg
 
 
