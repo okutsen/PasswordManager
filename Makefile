@@ -7,9 +7,6 @@ TARGET=${TARGET_PATH}/${NAME}
 .DEFAULT_GOAL := help
 export PM_PORT=${PORT}
 
-write:
-	@echo ${PORT}
-
 dependencies: ## Update dependencies
 	go mod vendor
 
