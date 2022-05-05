@@ -21,6 +21,6 @@ func main() {
 
 	err = serviceAPI.Start()
 	if err != nil {
-		logger.Fatal(err)
+		logger.Fatalf("start application", err)
 	}
 }
