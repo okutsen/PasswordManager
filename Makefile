@@ -16,15 +16,15 @@ build: ## Make build of the project
 run: ## Run the project
 	${TARGET_PATH}/${NAME}
 
-dockerBuild: ## Create an image in docker
+docker_build: ## Create an image in docker
 	docker build -t ${DOCKER_NAME} ./
 
-dockerRun: ## Run container
+docker_run: ## Run container
 	docker run -p ${PORT}:${PORT} --name="${DOCKER_NAME}" ${DOCKER_NAME}
 
-dockerStart: dockerBuild dockerRun ## Create an image in docker and run a container
+docker_start: docker_build docker_run ## Create an image in docker and run a container
 
-dockerStop: ## Delete an image and container with name "password-manager"
+docker_stop: ## Delete an image and container with name "password-manager"
 	docker stop ${DOCKER_NAME}; docker rm ${DOCKER_NAME}; docker rmi -f ${DOCKER_NAME}
 
 up: dependencies build run ## Update dependencies, build the project and run it
