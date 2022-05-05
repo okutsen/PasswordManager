@@ -3,25 +3,19 @@ package config
 import (
 	"fmt"
 
-	"github.com/spf13/viper"
+	"github.com/kelseyhightower/envconfig"
 )
 
 type Config struct {
-	Host string
-	Port uint
+	Port uint `envConfig:"PM_PORT" default:"10000"`
 }
 
-func initConfig(configPath string) error {
-	viper.SetConfigFile(configPath)
-	return viper.ReadInConfig()
-}
-
-func NewConfig(configPath string) (*Config, error) {
-	if err := initConfig(configPath); err != nil {
-		return nil, fmt.Errorf("read config: %w", err)
+func NewConfig() (*Config, error) {
+	var c Config
+	err := envconfig.Process("pm", &c)
+	if err != nil {
+		return nil, fmt.Errorf("failed to process envconfig: %w", err)
 	}
-	return &Config{
-		Host: viper.GetString("host"),
-		Port: viper.GetUint("port"),
-	}, nil
+
+	return &c, nil
 }
