@@ -7,7 +7,7 @@ import (
 )
 
 type Config struct {
-	Port uint
+	Port uint `envConfig:"PM_PORT" default:"10000"`
 }
 
 func NewConfig() (*Config, error) {
