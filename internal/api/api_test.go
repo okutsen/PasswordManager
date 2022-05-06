@@ -7,6 +7,7 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 
+	"github.com/okutsen/PasswordManager/internal/controller"
 	"github.com/okutsen/PasswordManager/internal/log"
 )
 
@@ -32,11 +33,13 @@ type TableTests struct {
 
 func TestGetRecords(t *testing.T) {
 	logger := log.NewLogrusLogger()
+	ctrl := controller.New(logger)
+	hctx := &HandlerContext{ctrl, logger}
 	tests := TableTests{
 		tt: []*TableTest{
 			{
 				testName:           "Get all records",
-				handle:             NewGetAllRecordsHandler(logger),
+				handle:             NewGetAllRecordsHandler(hctx),
 				httpMethod:         http.MethodGet,
 				httpPath:           "/records",
 				expectedHTTPStatus: http.StatusOK,
@@ -44,7 +47,7 @@ func TestGetRecords(t *testing.T) {
 			},
 			{
 				testName:   "Get record by id 1",
-				handle:     NewGetRecordHandler(logger),
+				handle:     NewGetRecordHandler(hctx),
 				httpMethod: http.MethodGet,
 				httpPath:   "/records/0",
 				ps: httprouter.Params{
@@ -55,7 +58,7 @@ func TestGetRecords(t *testing.T) {
 			},
 			{
 				testName:   "Get record by id 5",
-				handle:     NewGetRecordHandler(logger),
+				handle:     NewGetRecordHandler(hctx),
 				httpMethod: http.MethodGet,
 				httpPath:   "/records/5",
 				ps: httprouter.Params{
@@ -66,14 +69,14 @@ func TestGetRecords(t *testing.T) {
 			},
 			{
 				testName:   "Returns 404 on missing record",
-				handle:     NewGetRecordHandler(logger),
+				handle:     NewGetRecordHandler(hctx),
 				httpMethod: http.MethodGet,
 				httpPath:   "/records/a",
 				ps: httprouter.Params{
 					httprouter.Param{Key: IDParamName, Value: "a"},
 				},
 				expectedHTTPStatus: http.StatusBadRequest,
-				expectedBody:       RecordNotFoundMessage,
+				expectedBody:       http.StatusText(http.StatusBadRequest),
 			}},
 	}
 	TableTestRunner(t, tests)
@@ -81,15 +84,17 @@ func TestGetRecords(t *testing.T) {
 
 func TestPostRecords(t *testing.T) {
 	logger := log.NewLogrusLogger()
+	ctrl := controller.New(logger)
+	hctx := &HandlerContext{ctrl, logger}
 	tests := TableTests{
 		tt: []*TableTest{
 			{
 				testName:           "Post record",
-				expectedHTTPStatus: http.StatusAccepted,
-				expectedBody:       RecordCreatedMessage,
-				handle:             NewCreateRecordsHandler(logger),
+				handle:             NewCreateRecordsHandler(hctx),
 				httpMethod:         http.MethodPost,
 				httpPath:           "/records/",
+				expectedHTTPStatus: http.StatusAccepted,
+				expectedBody:       RecordCreatedMessage,
 			}},
 	}
 	TableTestRunner(t, tests)

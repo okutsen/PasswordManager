@@ -10,38 +10,44 @@ import (
 )
 
 const (
-	IDParamName           = "recordName"
-	RecordNotFoundMessage = "Item not found"
-	RecordCreatedMessage  = "Record created"
+	IDParamName = "recordName"
 )
+
+type Controller interface {
+	GetAllRecords() (string, error)
+	GetRecord(uint64) (string, error)
+	CreateRecords() (string, error)
+}
 
 type API struct {
 	config *Config
-	log    log.Logger
+	hctx   *HandlerContext
 }
 
-func New(config *Config, log log.Logger) *API {
+func New(config *Config, ctrl Controller, logger log.Logger) *API {
 	return &API{
 		config: config,
-		log:    log,
+		hctx: &HandlerContext{
+			ctrl:  ctrl,
+			logger: logger.WithFields(log.Fields{"service": "API"}),
+		},
 	}
 }
 
 func (api *API) endpointLogger(handler httprouter.Handle) httprouter.Handle {
 	return func(rw http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		api.log.Infof("API: Endpoint Hit: %s %s %s\n", r.Host, r.URL.Path, r.Method)
+		api.hctx.logger.Infof("API: Endpoint Hit: %s %s%s\n", r.Host, r.URL.Path, r.Method)
 		handler(rw, r, ps)
 	}
 }
 
 func (api *API) Start() error {
-	api.log.Info("API is starting")
+	api.hctx.logger.Info("API started")
 	router := httprouter.New()
-	api.log = api.log.WithFields(log.Fields{"service": "API"})
 
-	router.GET("/records", api.endpointLogger(NewGetAllRecordsHandler(api.log)))
-	router.GET(fmt.Sprintf("/records/:%s", IDParamName), api.endpointLogger(NewGetRecordHandler(api.log)))
-	router.POST("/records", api.endpointLogger(NewCreateRecordsHandler(api.log)))
+	router.GET("/records", api.endpointLogger(NewGetAllRecordsHandler(api.hctx)))
+	router.GET(fmt.Sprintf("/records/:%s", IDParamName), api.endpointLogger(NewGetRecordHandler(api.hctx)))
+	router.POST("/records", api.endpointLogger(NewCreateRecordsHandler(api.hctx)))
 
 	return http.ListenAndServe(api.config.Address(), router)
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/okutsen/PasswordManager/config"
 	"github.com/okutsen/PasswordManager/internal/api"
+	"github.com/okutsen/PasswordManager/internal/controller"
 	"github.com/okutsen/PasswordManager/internal/log"
 )
 
@@ -15,10 +16,11 @@ func main() {
 		logger.Fatalf("initialize config: %v", err)
 	}
 
+	ctrl := controller.New(logger)
+
 	serviceAPI := api.New(&api.Config{
 		Port: cfg.Port,
-	}, logger)
-
+	}, ctrl, logger)
 	err = serviceAPI.Start()
 	if err != nil {
 		logger.Fatalf("start application", err)
