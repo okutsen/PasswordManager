@@ -57,7 +57,7 @@ func NewGetRecordHandler(hctx *HandlerContext) httprouter.Handle {
 func NewCreateRecordsHandler(hctx *HandlerContext) httprouter.Handle {
 	contextLogger := hctx.logger.WithFields(log.Fields{"handler": "createRecords"})
 	return func(w http.ResponseWriter, _ *http.Request, _ httprouter.Params) {
-		responseBody, err := hctx.ctrl.GetAllRecords()
+		responseBody, err := hctx.ctrl.GetAllRecords() // Workaround
 		if err != nil {
 			contextLogger.Warnf("failed to get responce body: %s", err.Error())
 			writeResponse(responseBody, http.StatusAccepted, w, contextLogger)
