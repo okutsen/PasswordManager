@@ -39,7 +39,7 @@ func New(config *Config, ctrl Controller, logger log.Logger) *API {
 
 func (api *API) endpointLogger(handler httprouter.Handle) httprouter.Handle {
 	return func(rw http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		api.hctx.logger.Infof("API: Endpoint Hit: %s %s%s\n", r.Host, r.URL.Path, r.Method)
+		api.hctx.logger.Infof("API: Endpoint Hit: %s %s%s", r.Method, r.Host, r.URL.Path)
 		handler(rw, r, ps)
 	}
 }
