@@ -18,15 +18,17 @@ const (
 	RecordCreatedMessage = "Record created"
 )
 
-type HandlerContext struct {
-	ctrl   Controller
-	logger log.Logger
-}
+func NewEndpointLoggerMiddleware(ctx *APIContext, handler httprouter.Handle) httprouter.Handle {
+		return func(rw http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+			ctx.logger.Infof("API: Endpoint Hit: %s %s%s\n", r.Host, r.URL.Path, r.Method)
+			handler(rw, r, ps)
+		}
+	}
 
-func NewGetAllRecordsHandler(hctx *HandlerContext) httprouter.Handle {
-	logger := hctx.logger.WithFields(log.Fields{"handler": "getAllRecords"})
+func NewGetAllRecordsHandler(ctx *APIContext) httprouter.Handle {
+	logger := ctx.logger.WithFields(log.Fields{"handler": "getAllRecords"})
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-		records, err := hctx.ctrl.GetAllRecords()
+		records, err := ctx.ctrl.GetAllRecords()
 		if err != nil {
 			logger.Warnf("failed to get response from controller: %s", err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
@@ -36,8 +38,8 @@ func NewGetAllRecordsHandler(hctx *HandlerContext) httprouter.Handle {
 	}
 }
 
-func NewGetRecordHandler(hctx *HandlerContext) httprouter.Handle {
-	logger := hctx.logger.WithFields(log.Fields{"handler": "getRecord"})
+func NewGetRecordHandler(ctx *APIContext) httprouter.Handle {
+	logger := ctx.logger.WithFields(log.Fields{"handler": "getRecord"})
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		idStr := ps.ByName(IDParamName)
 		idInt, err := strconv.ParseUint(idStr, 10, 64)
@@ -46,7 +48,7 @@ func NewGetRecordHandler(hctx *HandlerContext) httprouter.Handle {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		records, err := hctx.ctrl.GetRecord(idInt)
+		records, err := ctx.ctrl.GetRecord(idInt)
 		if err != nil {
 			logger.Warnf("failed to get response from controller: %s", err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
@@ -56,8 +58,8 @@ func NewGetRecordHandler(hctx *HandlerContext) httprouter.Handle {
 	}
 }
 
-func NewCreateRecordsHandler(hctx *HandlerContext) httprouter.Handle {
-	logger := hctx.logger.WithFields(log.Fields{"handler": "createRecords"})
+func NewCreateRecordsHandler(ctx *APIContext) httprouter.Handle {
+	logger := ctx.logger.WithFields(log.Fields{"handler": "createRecords"})
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		// TODO: check content type
 		records, err := readRecords(r.Body)
@@ -67,7 +69,7 @@ func NewCreateRecordsHandler(hctx *HandlerContext) httprouter.Handle {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		err = hctx.ctrl.CreateRecords(records)
+		err = ctx.ctrl.CreateRecords(records)
 		if err != nil {
 			logger.Warnf("failed to get response from controller: %s", err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
