@@ -94,7 +94,7 @@ func readRecords(requestBody io.Reader) ([]domain.Record, error) {
 func writeTextResponse(w http.ResponseWriter, logger log.Logger, body string, statusCode int) {
 	_, err := fmt.Fprint(w, body)
 	if err != nil {
-		logger.Warnf("failed to write response: %s", err.Error())
+		logger.Warnf("failed to write text response: %s", err.Error())
 	}
 	w.WriteHeader(statusCode)
 	logger.Infof("response written\n%s", body)
@@ -104,7 +104,8 @@ func writeJSONResponse(w http.ResponseWriter, logger log.Logger, body []domain.R
 	w.Header().Set("Content-Type", "application/json")
 	err := json.NewEncoder(w).Encode(body)
 	if err != nil {
-		logger.Warnf("failed to write response: %s", err.Error())
+		logger.Warnf("failed to write JSON response: %s", err.Error())
 	}
-	logger.Infof("response written\n%s", body)
+	// TODO: do not log private info
+	logger.Infof("response written: %+v", body)
 }
