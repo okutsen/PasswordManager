@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"sync"
 	"syscall"
 
 	"github.com/okutsen/PasswordManager/config"
@@ -29,9 +28,9 @@ func main() {
 	defer cancel()
 
 	go func() {
-		err = serviceAPI.Start(ctx)
+		err = serviceAPI.Start()
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			logger.Fatalf("start application %v", err)
+			logger.Errorf("start application %v", err)
 		}
 	}()
 
@@ -40,13 +39,8 @@ func main() {
 
 	<-c
 
-	closeWaitGroup := &sync.WaitGroup{}
-
-	closeWaitGroup.Add(1)
-	err = serviceAPI.Stop(ctx, closeWaitGroup)
+	err = serviceAPI.Stop(ctx)
 	if err != nil {
-		panic(err)
+		logger.Errorf("stop application %v", err)
 	}
-
-	closeWaitGroup.Wait()
 }

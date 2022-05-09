@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"sync"
 
 	"github.com/julienschmidt/httprouter"
 
@@ -37,7 +36,7 @@ func (api *API) endpointLogger(handler httprouter.Handle) httprouter.Handle {
 	}
 }
 
-func (api *API) Start(_ context.Context) error {
+func (api *API) Start() error {
 	api.log.Info("server is starting")
 	router := httprouter.New()
 	api.log = api.log.WithFields(log.Fields{"service": "API"})
@@ -51,8 +50,7 @@ func (api *API) Start(_ context.Context) error {
 	return api.server.ListenAndServe()
 }
 
-func (api *API) Stop(ctx context.Context, wg *sync.WaitGroup) error {
-	defer wg.Done()
+func (api *API) Stop(ctx context.Context) error {
 	api.log.Info("shutting down server")
 	return api.server.Shutdown(ctx)
 }
