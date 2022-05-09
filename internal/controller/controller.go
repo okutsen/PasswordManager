@@ -60,6 +60,6 @@ func (c *Controller) GetRecord(id uint64) ([]domain.Record, error) {
 	},}, nil
 }
 
-func (c *Controller) CreateRecords(records []domain.Record) (string, error) {
-	return "", nil
+func (c *Controller) CreateRecords(records []domain.Record) error {
+	return nil
 }
