@@ -18,7 +18,7 @@ const (
 type Controller interface {
 	GetAllRecords() ([]domain.Record, error)
 	GetRecord(uint64) ([]domain.Record, error)
-	CreateRecords([]domain.Record) (string, error)
+	CreateRecords([]domain.Record) error
 }
 
 type API struct {

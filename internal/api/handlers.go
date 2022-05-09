@@ -1,17 +1,21 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 
 	"github.com/julienschmidt/httprouter"
 
+	"github.com/okutsen/PasswordManager/domain"
 	"github.com/okutsen/PasswordManager/internal/log"
 )
 
 const (
-	RecordCreatedMessage  = "Record created"
+	RecordCreatedMessage = "Record created"
 )
 
 type HandlerContext struct {
@@ -20,57 +24,85 @@ type HandlerContext struct {
 }
 
 func NewGetAllRecordsHandler(hctx *HandlerContext) httprouter.Handle {
-	contextLogger := hctx.logger.WithFields(log.Fields{"handler": "getAllRecords"})
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		responseBody, err := hctx.ctrl.GetAllRecords()
+	logger := hctx.logger.WithFields(log.Fields{"handler": "getAllRecords"})
+	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+		records, err := hctx.ctrl.GetAllRecords()
 		if err != nil {
-			contextLogger.Warnf("failed to get responce body: %s", err.Error())
-			writeResponse(responseBody, http.StatusInternalServerError, w, contextLogger)
+			logger.Warnf("failed to get response from controller: %s", err.Error())
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		writeResponse(responseBody, http.StatusOK, w, contextLogger)
+		writeJSONResponse(w, logger, records)
 	}
 }
 
 func NewGetRecordHandler(hctx *HandlerContext) httprouter.Handle {
-	contextLogger := hctx.logger.WithFields(log.Fields{"handler": "getRecord"})
+	logger := hctx.logger.WithFields(log.Fields{"handler": "getRecord"})
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		idStr := ps.ByName(IDParamName)
 		idInt, err := strconv.ParseUint(idStr, 10, 64)
 		if err != nil {
-			contextLogger.Warnf("failed to convert path parameter id: %s", err.Error())
-			code := http.StatusBadRequest
-			writeResponse(http.StatusText(code), code, w, contextLogger)
+			logger.Warnf("failed to convert path parameter id: %s", err.Error())
+			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		responseBody, err := hctx.ctrl.GetRecord(idInt)
+		records, err := hctx.ctrl.GetRecord(idInt)
 		if err != nil {
-			contextLogger.Warnf("failed to get responce body: %s", err.Error())
-			code := http.StatusInternalServerError
-			writeResponse(http.StatusText(code), code, w, contextLogger)
+			logger.Warnf("failed to get response from controller: %s", err.Error())
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		writeResponse(responseBody, http.StatusOK, w, contextLogger)
+		writeJSONResponse(w, logger, records)
 	}
 }
 
 func NewCreateRecordsHandler(hctx *HandlerContext) httprouter.Handle {
-	contextLogger := hctx.logger.WithFields(log.Fields{"handler": "createRecords"})
-	return func(w http.ResponseWriter, _ *http.Request, _ httprouter.Params) {
-		responseBody, err := hctx.ctrl.GetAllRecords() // Workaround
+	logger := hctx.logger.WithFields(log.Fields{"handler": "createRecords"})
+	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+		// TODO: check content type
+		records, err := readRecords(r.Body)
+		defer r.Body.Close()
 		if err != nil {
-			contextLogger.Warnf("failed to get responce body: %s", err.Error())
-			writeResponse(responseBody, http.StatusAccepted, w, contextLogger)
+			logger.Warnf("failed to parse JSON: %s", err.Error())
+			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		writeResponse(RecordCreatedMessage, http.StatusAccepted, w, contextLogger)
+		err = hctx.ctrl.CreateRecords(records)
+		if err != nil {
+			logger.Warnf("failed to get response from controller: %s", err.Error())
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		writeTextResponse(w, logger, RecordCreatedMessage, http.StatusAccepted)
 	}
 }
 
-func writeResponse(body string, statusCode int, w http.ResponseWriter, logger log.Logger) {
-	// TODO: write JSON response
-	w.WriteHeader(statusCode)
+func readRecords(requestBody io.Reader) ([]domain.Record, error) {
+	// TODO: prevent overflow (read by batches or set max size)
+	recordsJSON, err := ioutil.ReadAll(requestBody)
+	if err != nil {
+		return nil, err
+	}
+	var records []domain.Record
+	err = json.Unmarshal(recordsJSON, &records)
+	if err != nil {
+		return nil, err
+	}
+	return records, err
+}
+
+func writeTextResponse(w http.ResponseWriter, logger log.Logger, body string, statusCode int) {
 	_, err := fmt.Fprint(w, body)
+	if err != nil {
+		logger.Warnf("failed to write response: %s", err.Error())
+	}
+	w.WriteHeader(statusCode)
+	logger.Infof("response written\n%s", body)
+}
+
+func writeJSONResponse(w http.ResponseWriter, logger log.Logger, body []domain.Record) {
+	w.Header().Set("Content-Type", "application/json")
+	err := json.NewEncoder(w).Encode(body)
 	if err != nil {
 		logger.Warnf("failed to write response: %s", err.Error())
 	}
