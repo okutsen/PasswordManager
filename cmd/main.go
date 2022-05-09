@@ -34,6 +34,7 @@ func main() {
 		err = serviceAPI.Start()
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			logger.Errorf("start application %v", err)
+			return
 		}
 	}()
 
