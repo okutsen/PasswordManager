@@ -30,7 +30,7 @@ func New(config *Config, ctrl Controller, logger log.Logger) *API {
 	return &API{
 		config: config,
 		hctx: &HandlerContext{
-			ctrl:  ctrl,
+			ctrl:   ctrl,
 			logger: logger.WithFields(log.Fields{"service": "API"}),
 		},
 	}
@@ -57,6 +57,6 @@ func (api *API) Start() error {
 }
 
 func (api *API) Stop(ctx context.Context) error {
-	api.log.Info("shutting down server")
+	api.hctx.logger.Infof("shutting down server")
 	return api.server.Shutdown(ctx)
 }

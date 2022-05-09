@@ -25,7 +25,7 @@ func main() {
 
 	ctrl := controller.New(logger)
 
-	serviceAPI := api.New(&api.Config{Port: cfg.Port}, ctrl logger)
+	serviceAPI := api.New(&api.Config{Port: cfg.Port}, ctrl, logger)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -44,6 +44,5 @@ func main() {
 
 	err = serviceAPI.Stop(ctx)
 
-		logger.Errorf("stop application %v", err)
-	}
+	logger.Errorf("stop application %v", err)
 }
