@@ -10,6 +10,7 @@ import (
 
 	"github.com/okutsen/PasswordManager/config"
 	"github.com/okutsen/PasswordManager/internal/api"
+	"github.com/okutsen/PasswordManager/internal/controller"
 	"github.com/okutsen/PasswordManager/internal/log"
 )
 
@@ -22,7 +23,9 @@ func main() {
 		logger.Fatalf("initialize config: %v", err)
 	}
 
-	serviceAPI := api.New(&api.Config{Port: cfg.Port}, logger)
+	ctrl := controller.New(logger)
+
+	serviceAPI := api.New(&api.Config{Port: cfg.Port}, ctrl logger)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -40,7 +43,7 @@ func main() {
 	<-c
 
 	err = serviceAPI.Stop(ctx)
-	if err != nil {
+
 		logger.Errorf("stop application %v", err)
 	}
 }

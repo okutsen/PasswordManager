@@ -10,45 +10,68 @@ import (
 	"github.com/okutsen/PasswordManager/internal/log"
 )
 
-func NewGetAllRecordsHandler(logger log.Logger) httprouter.Handle {
-	contextLogger := logger.WithFields(log.Fields{"handler": "getAllRecords"})
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+const (
+	RecordCreatedMessage  = "Record created"
+)
 
-		// TODO: get from controller
-		responseBody := "Records:\n0,1,2,3,4,5"
-		writeResponse(responseBody, http.StatusOK, w, contextLogger)
-	}
+type HandlerContext struct {
+	ctrl   Controller
+	logger log.Logger
 }
 
-func NewGetRecordHandler(logger log.Logger) httprouter.Handle {
-	contextLogger := logger.WithFields(log.Fields{"handler": "getRecord"})
+func NewGetAllRecordsHandler(hctx *HandlerContext) httprouter.Handle {
+	contextLogger := hctx.logger.WithFields(log.Fields{"handler": "getAllRecords"})
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		idStr := ps.ByName(IDParamName)
-		// TODO: convert to correct type (uint)
-		idInt, err := strconv.Atoi(idStr)
+		responseBody, err := hctx.ctrl.GetAllRecords()
 		if err != nil {
-			contextLogger.Warnf("failed to convert path parameter id: %s", err.Error())
-			writeResponse(RecordNotFoundMessage, http.StatusBadRequest, w, contextLogger)
+			contextLogger.Warnf("failed to get responce body: %s", err.Error())
+			writeResponse(responseBody, http.StatusInternalServerError, w, contextLogger)
 			return
 		}
-		responseBody := fmt.Sprintf("Records:\n%d", idInt)
 		writeResponse(responseBody, http.StatusOK, w, contextLogger)
 	}
 }
 
-func NewCreateRecordsHandler(logger log.Logger) httprouter.Handle {
-	contextLogger := logger.WithFields(log.Fields{"handler": "createRecords"})
+func NewGetRecordHandler(hctx *HandlerContext) httprouter.Handle {
+	contextLogger := hctx.logger.WithFields(log.Fields{"handler": "getRecord"})
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		idStr := ps.ByName(IDParamName)
+		idInt, err := strconv.ParseUint(idStr, 10, 64)
+		if err != nil {
+			contextLogger.Warnf("failed to convert path parameter id: %s", err.Error())
+			code := http.StatusBadRequest
+			writeResponse(http.StatusText(code), code, w, contextLogger)
+			return
+		}
+		responseBody, err := hctx.ctrl.GetRecord(idInt)
+		if err != nil {
+			contextLogger.Warnf("failed to get responce body: %s", err.Error())
+			code := http.StatusInternalServerError
+			writeResponse(http.StatusText(code), code, w, contextLogger)
+			return
+		}
+		writeResponse(responseBody, http.StatusOK, w, contextLogger)
+	}
+}
+
+func NewCreateRecordsHandler(hctx *HandlerContext) httprouter.Handle {
+	contextLogger := hctx.logger.WithFields(log.Fields{"handler": "createRecords"})
 	return func(w http.ResponseWriter, _ *http.Request, _ httprouter.Params) {
+		responseBody, err := hctx.ctrl.GetAllRecords()
+		if err != nil {
+			contextLogger.Warnf("failed to get responce body: %s", err.Error())
+			writeResponse(responseBody, http.StatusAccepted, w, contextLogger)
+			return
+		}
 		writeResponse(RecordCreatedMessage, http.StatusAccepted, w, contextLogger)
 	}
 }
 
-func writeResponse(body string, status int, w http.ResponseWriter, logger log.Logger) {
+func writeResponse(body string, statusCode int, w http.ResponseWriter, logger log.Logger) {
 	// TODO: write JSON response
-	w.WriteHeader(status)
+	w.WriteHeader(statusCode)
 	_, err := fmt.Fprint(w, body)
 	if err != nil {
-		// TODO: test warning
 		logger.Warnf("failed to write response: %s", err.Error())
 	}
 	logger.Infof("response written\n%s", body)
