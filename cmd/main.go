@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/okutsen/PasswordManager/config"
 	"github.com/okutsen/PasswordManager/internal/api"
@@ -27,9 +28,6 @@ func main() {
 
 	serviceAPI := api.New(&api.Config{Port: cfg.Port}, ctrl, logger)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
 	go func() {
 		err = serviceAPI.Start()
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -41,9 +39,15 @@ func main() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
 
-	<-c
+	osCall := <-c
+	logger.Infof("system call: %v", osCall)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
 
 	err = serviceAPI.Stop(ctx)
+	if err != nil {
+		logger.Errorf("stop application %v", err)
+	}
 
-	logger.Errorf("stop application %v", err)
 }
