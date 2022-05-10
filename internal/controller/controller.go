@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"github.com/okutsen/PasswordManager/domain"
+	"github.com/okutsen/PasswordManager/schema/dbschema"
 	"github.com/okutsen/PasswordManager/internal/log"
 )
 
@@ -16,9 +16,9 @@ func New(logger log.Logger) *Controller {
 	}
 }
 
-func (c *Controller) GetAllRecords() ([]domain.Record, error) {
+func (c *Controller) GetAllRecords() ([]dbschema.Record, error) {
 	// queryResult := repo.GetAllRecords()
-	return []domain.Record{{
+	return []dbschema.Record{{
 		ID:       1,
 		Name:     "testName",
 		Login:    "testLogin",
@@ -50,9 +50,9 @@ func (c *Controller) GetAllRecords() ([]domain.Record, error) {
 		}}, nil
 }
 
-func (c *Controller) GetRecord(id uint64) ([]domain.Record, error) {
+func (c *Controller) GetRecord(id uint64) ([]dbschema.Record, error) {
 	// TODO: pass uuid
-	return []domain.Record{{
+	return []dbschema.Record{{
 		ID:       id,
 		Name:     "testName",
 		Login:    "testLogin",
@@ -60,6 +60,6 @@ func (c *Controller) GetRecord(id uint64) ([]domain.Record, error) {
 	},}, nil
 }
 
-func (c *Controller) CreateRecords(records []domain.Record) error {
+func (c *Controller) CreateRecords(records []dbschema.Record) error {
 	return nil
 }

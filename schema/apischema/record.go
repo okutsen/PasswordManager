@@ -1,7 +1,7 @@
-package domain
+package apischema
 
-// TODO: more fields (dateCreated, url, description)
 // TODO: add validator
+// TODO: add uuid (request id)
 type Record struct {
 	ID       uint64 `json:"id"`
 	Name     string `json:"name"`

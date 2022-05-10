@@ -7,7 +7,7 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 
-	"github.com/okutsen/PasswordManager/domain"
+	"github.com/okutsen/PasswordManager/schema/dbschema"
 	"github.com/okutsen/PasswordManager/internal/log"
 )
 
@@ -16,9 +16,9 @@ const (
 )
 
 type Controller interface {
-	GetAllRecords() ([]domain.Record, error)
-	GetRecord(uint64) ([]domain.Record, error)
-	CreateRecords([]domain.Record) error
+	GetAllRecords() ([]dbschema.Record, error)
+	GetRecord(uint64) ([]dbschema.Record, error)
+	CreateRecords([]dbschema.Record) error
 }
 
 type API struct {
