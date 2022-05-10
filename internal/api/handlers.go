@@ -10,8 +10,9 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 
-	"github.com/okutsen/PasswordManager/domain"
 	"github.com/okutsen/PasswordManager/internal/log"
+	"github.com/okutsen/PasswordManager/schema/apischema"
+	"github.com/okutsen/PasswordManager/schema/schemabuilder"
 )
 
 const (
@@ -19,11 +20,11 @@ const (
 )
 
 func NewEndpointLoggerMiddleware(ctx *APIContext, handler httprouter.Handle) httprouter.Handle {
-		return func(rw http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-			ctx.logger.Infof("API: Endpoint Hit: %s %s%s\n", r.Host, r.URL.Path, r.Method)
-			handler(rw, r, ps)
-		}
+	return func(rw http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		ctx.logger.Infof("API: Endpoint Hit: %s %s%s\n", r.Host, r.URL.Path, r.Method)
+		handler(rw, r, ps)
 	}
+}
 
 func NewGetAllRecordsHandler(ctx *APIContext) httprouter.Handle {
 	logger := ctx.logger.WithFields(log.Fields{"handler": "getAllRecords"})
@@ -34,7 +35,8 @@ func NewGetAllRecordsHandler(ctx *APIContext) httprouter.Handle {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		writeJSONResponse(w, logger, records)
+		recordsAPI := schemabuilder.BuildRecordsAPIFrom(records)
+		writeJSONResponse(w, logger, recordsAPI)
 	}
 }
 
@@ -54,7 +56,8 @@ func NewGetRecordHandler(ctx *APIContext) httprouter.Handle {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		writeJSONResponse(w, logger, records)
+		recordsAPI := schemabuilder.BuildRecordsAPIFrom(records)
+		writeJSONResponse(w, logger, recordsAPI)
 	}
 }
 
@@ -62,13 +65,15 @@ func NewCreateRecordsHandler(ctx *APIContext) httprouter.Handle {
 	logger := ctx.logger.WithFields(log.Fields{"handler": "createRecords"})
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		// TODO: check content type
-		records, err := readRecords(r.Body)
+		var recordsAPI []apischema.Record
+		err := readJSON(r.Body, recordsAPI)
 		defer r.Body.Close()
 		if err != nil {
 			logger.Warnf("failed to parse JSON: %s", err.Error())
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
+		records := schemabuilder.BuildRecordsFrom(recordsAPI)
 		err = ctx.ctrl.CreateRecords(records)
 		if err != nil {
 			logger.Warnf("failed to get response from controller: %s", err.Error())
@@ -79,18 +84,17 @@ func NewCreateRecordsHandler(ctx *APIContext) httprouter.Handle {
 	}
 }
 
-func readRecords(requestBody io.Reader) ([]domain.Record, error) {
+func readJSON(requestBody io.Reader, out any) error {
 	// TODO: prevent overflow (read by batches or set max size)
 	recordsJSON, err := ioutil.ReadAll(requestBody)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	var records []domain.Record
-	err = json.Unmarshal(recordsJSON, &records)
+	err = json.Unmarshal(recordsJSON, &out)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return records, err
+	return err
 }
 
 func writeTextResponse(w http.ResponseWriter, logger log.Logger, body string, statusCode int) {
@@ -102,7 +106,7 @@ func writeTextResponse(w http.ResponseWriter, logger log.Logger, body string, st
 	logger.Infof("response written\n%s", body)
 }
 
-func writeJSONResponse(w http.ResponseWriter, logger log.Logger, body []domain.Record) {
+func writeJSONResponse(w http.ResponseWriter, logger log.Logger, body []apischema.Record) {
 	w.Header().Set("Content-Type", "application/json")
 	err := json.NewEncoder(w).Encode(body)
 	if err != nil {
