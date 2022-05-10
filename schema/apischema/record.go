@@ -8,3 +8,7 @@ type Record struct {
 	Login    string `json:"login"`
 	Password string `json:"password"`
 }
+
+type Error struct {
+	Message string `json:"message"`
+}
