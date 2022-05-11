@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"strconv"
@@ -79,7 +78,7 @@ func NewCreateRecordsHandler(ctx *APIContext) httprouter.Handle {
 			writeJSONResponse(w, logger, apischema.Error{Message: "Ivalid JSON"}, http.StatusBadRequest)
 			return
 		}
-		writeTextResponse(w, logger, RecordCreatedMessage, http.StatusAccepted)
+		w.WriteHeader(http.StatusAccepted)
 	}
 }
 
@@ -94,15 +93,6 @@ func readJSON(requestBody io.Reader, out any) error {
 		return err
 	}
 	return err
-}
-
-func writeTextResponse(w http.ResponseWriter, logger log.Logger, body string, statusCode int) {
-	_, err := fmt.Fprint(w, body)
-	if err != nil {
-		logger.Warnf("failed to write text response: %s", err.Error())
-	}
-	w.WriteHeader(statusCode)
-	logger.Infof("response written\n%s", body)
 }
 
 func writeJSONResponse(w http.ResponseWriter, logger log.Logger, body any, statusCode int) {
