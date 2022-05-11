@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/okutsen/PasswordManager/config"
 	"github.com/okutsen/PasswordManager/internal/api"
@@ -21,7 +20,8 @@ func main() {
 	logger := log.NewLogrusLogger()
 	cfg, err := config.NewConfig()
 	if err != nil {
-		logger.Fatalf("initialize config: %v", err)
+		logger.Errorf("failed to initialize config: %v", err)
+		os.Exit(1)
 	}
 
 	ctrl := controller.New(logger)
@@ -31,23 +31,24 @@ func main() {
 	go func() {
 		err = serviceAPI.Start()
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			logger.Errorf("start application %v", err)
+			logger.Errorf("failed to start application %v", err)
 			return
 		}
 	}()
 
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
+	osSignals := make(chan os.Signal, 1)
+	signal.Notify(osSignals, syscall.SIGINT, syscall.SIGTERM)
 
-	osCall := <-c
+	osCall := <-osSignals
 	logger.Infof("system call: %v", osCall)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), cfg.APIShutdownTimeout)
 	defer cancel()
 
 	err = serviceAPI.Stop(ctx)
 	if err != nil {
-		logger.Errorf("stop application %v", err)
+		logger.Errorf("failed to stop application %v", err)
+		os.Exit(1)
 	}
 
 }
