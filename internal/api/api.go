@@ -51,6 +51,8 @@ func (api *API) Start() error {
 	router.GET("/records", NewEndpointLoggerMiddleware(api.ctx, NewGetAllRecordsHandler(api.ctx)))
 	router.GET(fmt.Sprintf("/records/:%s", IDParamName), NewEndpointLoggerMiddleware(api.ctx, NewGetRecordHandler(api.ctx)))
 	router.POST("/records", NewEndpointLoggerMiddleware(api.ctx, NewCreateRecordHandler(api.ctx)))
+	router.PUT("/records", NewEndpointLoggerMiddleware(api.ctx, NewUpdateRecordHandler(api.ctx)))
+	router.DELETE(fmt.Sprintf("/records/:%s", IDParamName), NewEndpointLoggerMiddleware(api.ctx, NewDeleteRecordHandler(api.ctx)))
 
 	api.server = http.Server{Addr: api.config.Address(), Handler: router}
 
