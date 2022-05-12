@@ -76,6 +76,7 @@ func NewCreateRecordHandler(ctx *APIContext) httprouter.Handle {
 			return
 		}
 		record := schemabuilder.BuildRecordFrom(recordAPI)
+		// TODO: if exists return err (409 Conflict)
 		err = ctx.ctrl.CreateRecord(record)
 		if err != nil {
 			logger.Warnf("Failed to get records from controller: %s", err.Error())
