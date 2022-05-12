@@ -19,7 +19,7 @@ const (
 
 func NewEndpointLoggerMiddleware(ctx *APIContext, handler httprouter.Handle) httprouter.Handle {
 	return func(rw http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		ctx.logger.Infof("API: Endpoint Hit: %s %s%s\n", r.Host, r.URL.Path, r.Method)
+		ctx.logger.Infof("API: Endpoint Hit: %s %s%s", r.Method, r.Host, r.URL.Path)
 		handler(rw, r, ps)
 	}
 }
@@ -136,9 +136,10 @@ func NewDeleteRecordHandler(ctx *APIContext) httprouter.Handle {
 	}
 }
 
-func readJSON(requestBody io.Reader, out any) error {
+func readJSON(requestBody io.ReadCloser, out any) error {
 	// TODO: prevent overflow (read by batches or set max size)
 	recordsJSON, err := io.ReadAll(requestBody)
+	defer requestBody.Close()
 	if err != nil {
 		return err
 	}
@@ -151,11 +152,11 @@ func readJSON(requestBody io.Reader, out any) error {
 
 func writeJSONResponse(w http.ResponseWriter, logger log.Logger, body any, statusCode int) {
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
 	err := json.NewEncoder(w).Encode(body)
 	if err != nil {
 		logger.Warnf("Failed to write JSON response: %s", err.Error())
 	}
-	w.WriteHeader(statusCode)
 	// TODO: do not log private info
 	logger.Debugf("Response written: %+v", body)
 }
