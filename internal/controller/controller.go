@@ -1,8 +1,8 @@
 package controller
 
 import (
-	"github.com/okutsen/PasswordManager/schema/dbschema"
 	"github.com/okutsen/PasswordManager/internal/log"
+	"github.com/okutsen/PasswordManager/schema/dbschema"
 )
 
 type Controller struct {
@@ -16,14 +16,15 @@ func New(logger log.Logger) *Controller {
 	}
 }
 
-func (c *Controller) GetAllRecords() ([]dbschema.Record, error) {
+func (c *Controller) GetAllRecords() ([]*dbschema.Record, error) {
 	// queryResult := repo.GetAllRecords()
-	return []dbschema.Record{{
-		ID:       1,
-		Name:     "testName",
-		Login:    "testLogin",
-		Password: "testPassword",
-	},
+	return []*dbschema.Record{
+		{
+			ID:       1,
+			Name:     "testName",
+			Login:    "testLogin",
+			Password: "testPassword",
+		},
 		{
 			ID:       2,
 			Name:     "testName",
@@ -47,19 +48,28 @@ func (c *Controller) GetAllRecords() ([]dbschema.Record, error) {
 			Name:     "testName",
 			Login:    "testLogin",
 			Password: "testPassword",
-		}}, nil
+		},
+	}, nil
 }
 
-func (c *Controller) GetRecord(id uint64) ([]dbschema.Record, error) {
+func (c *Controller) GetRecord(id uint64) (*dbschema.Record, error) {
 	// TODO: pass uuid
-	return []dbschema.Record{{
+	return &dbschema.Record{
 		ID:       id,
 		Name:     "testName",
 		Login:    "testLogin",
 		Password: "testPassword",
-	},}, nil
+	}, nil
 }
 
-func (c *Controller) CreateRecords(records []dbschema.Record) error {
+func (c *Controller) CreateRecord(records *dbschema.Record) error {
+	return nil
+}
+
+func (c *Controller) UpdateRecord(records *dbschema.Record) error {
+	return nil
+}
+
+func (c *Controller) DeleteRecord(ids uint64) error {
 	return nil
 }

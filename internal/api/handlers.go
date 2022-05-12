@@ -48,13 +48,13 @@ func NewGetRecordHandler(ctx *APIContext) httprouter.Handle {
 			writeJSONResponse(w, logger, apischema.Error{Message: "Ivalid ID"}, http.StatusBadRequest)
 			return
 		}
-		records, err := ctx.ctrl.GetRecord(idInt)
+		record, err := ctx.ctrl.GetRecord(idInt)
 		if err != nil {
 			logger.Warnf("failed to get records from controller: %s", err.Error())
 			writeJSONResponse(w, logger, apischema.Error{Message: "Failed to receive data from controller"}, http.StatusInternalServerError)
 			return
 		}
-		recordsAPI := schemabuilder.BuildRecordsAPIFrom(records)
+		recordsAPI := schemabuilder.BuildRecordAPIFrom(record)
 		writeJSONResponse(w, logger, recordsAPI, http.StatusOK)
 	}
 }
@@ -63,16 +63,16 @@ func NewCreateRecordsHandler(ctx *APIContext) httprouter.Handle {
 	logger := ctx.logger.WithFields(log.Fields{"handler": "createRecords"})
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		// TODO: check content type
-		var recordsAPI []apischema.Record
-		err := readJSON(r.Body, recordsAPI)
+		var recordAPI *apischema.Record
+		err := readJSON(r.Body, recordAPI)
 		defer r.Body.Close()
 		if err != nil {
 			logger.Warnf("failed to read JSON: %s", err.Error())
 			writeJSONResponse(w, logger, apischema.Error{Message: "Ivalid JSON"}, http.StatusBadRequest)
 			return
 		}
-		records := schemabuilder.BuildRecordsFrom(recordsAPI)
-		err = ctx.ctrl.CreateRecords(records)
+		record := schemabuilder.BuildRecordFrom(recordAPI)
+		err = ctx.ctrl.CreateRecord(record)
 		if err != nil {
 			logger.Warnf("failed to get records from controller: %s", err.Error())
 			writeJSONResponse(w, logger, apischema.Error{Message: "Ivalid JSON"}, http.StatusBadRequest)

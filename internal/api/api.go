@@ -16,9 +16,11 @@ const (
 )
 
 type Controller interface {
-	GetAllRecords() ([]dbschema.Record, error)
-	GetRecord(uint64) ([]dbschema.Record, error)
-	CreateRecords([]dbschema.Record) error
+	GetAllRecords() ([]*dbschema.Record, error)
+	GetRecord(uint64) (*dbschema.Record, error)
+	CreateRecord(*dbschema.Record) error
+	UpdateRecord(*dbschema.Record) error
+	DeleteRecord(uint64) error
 }
 
 type API struct {
