@@ -12,6 +12,7 @@ import (
 	"github.com/okutsen/PasswordManager/internal/api"
 	"github.com/okutsen/PasswordManager/internal/controller"
 	"github.com/okutsen/PasswordManager/internal/log"
+	"github.com/okutsen/PasswordManager/internal/repo"
 )
 
 // TODO: password tips or reset questions
@@ -25,6 +26,14 @@ func main() {
 	}
 
 	ctrl := controller.New(logger)
+
+	db, err := repo.New(cfg.DB, logger)
+	if err != nil {
+		logger.Errorf("failed to initialize DB: %v", err)
+		os.Exit(1)
+	}
+
+	//repository := repo.NewRepository(db)
 
 	serviceAPI := api.New(&api.Config{Port: cfg.Port}, ctrl, logger)
 
@@ -41,6 +50,12 @@ func main() {
 
 	osCall := <-osSignals
 	logger.Infof("system call: %v", osCall)
+
+	err = db.Close()
+	if err != nil {
+		logger.Errorf("failed to close DB: %v", err)
+		os.Exit(1)
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), cfg.APIShutdownTimeout)
 	defer cancel()
