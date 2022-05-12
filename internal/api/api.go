@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	IDParamName = "recordName"
+	IDParamName = "id"
 )
 
 type Controller interface {
