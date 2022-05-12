@@ -103,5 +103,5 @@ func writeJSONResponse(w http.ResponseWriter, logger log.Logger, body any, statu
 	}
 	w.WriteHeader(statusCode)
 	// TODO: do not log private info
-	logger.Infof("response written: %+v", body)
+	logger.Debugf("response written: %+v", body)
 }
