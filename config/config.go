@@ -10,6 +10,16 @@ import (
 type Config struct {
 	Port               uint          `envConfig:"PM_PORT" default:"10000"`
 	APIShutdownTimeout time.Duration `envConfig:"PM_API_SHUTDOWN_TIMEOUT" default:"30s"`
+	DB                 DBConfig
+}
+
+type DBConfig struct {
+	Host     string `envConfig:"PM_DB_HOST" default:"postgres"`
+	Port     string `envConfig:"PM_DB_PORT" default:"5432"`
+	DBName   string `envConfig:"PM_PM" default:"PM"`
+	Username string `envConfig:"PM_USERNAME" default:"admin"`
+	SSLMode  string `envConfig:"SSL_MODE" default:"disable"`
+	Password string `envConfig:"PM_PASSWORD" default:"1234"`
 }
 
 func NewConfig() (*Config, error) {
