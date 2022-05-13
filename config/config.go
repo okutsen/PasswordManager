@@ -8,9 +8,13 @@ import (
 )
 
 type Config struct {
-	Port               uint          `envConfig:"PM_PORT" default:"10000"`
-	APIShutdownTimeout time.Duration `envConfig:"PM_API_SHUTDOWN_TIMEOUT" default:"30s"`
-	DB                 DBConfig
+	API APIConfig
+	DB  DBConfig
+}
+
+type APIConfig struct {
+	Port            uint          `envConfig:"PM_PORT" default:"10000"`
+	ShutdownTimeout time.Duration `envConfig:"PM_API_SHUTDOWN_TIMEOUT" default:"30s"`
 }
 
 type DBConfig struct {
