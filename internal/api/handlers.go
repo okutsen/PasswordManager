@@ -1,78 +1,107 @@
 package api
 
 import (
-	"fmt"
+	"encoding/json"
+	"io"
 	"net/http"
 	"strconv"
 
 	"github.com/julienschmidt/httprouter"
 
 	"github.com/okutsen/PasswordManager/internal/log"
+	"github.com/okutsen/PasswordManager/schema/apischema"
+	"github.com/okutsen/PasswordManager/schema/schemabuilder"
 )
 
 const (
-	RecordCreatedMessage  = "Record created"
+	RecordCreatedMessage = "Record created"
 )
 
-type HandlerContext struct {
-	ctrl   Controller
-	logger log.Logger
-}
-
-func NewGetAllRecordsHandler(hctx *HandlerContext) httprouter.Handle {
-	contextLogger := hctx.logger.WithFields(log.Fields{"handler": "getAllRecords"})
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		responseBody, err := hctx.ctrl.GetAllRecords()
-		if err != nil {
-			contextLogger.Warnf("failed to get responce body: %s", err.Error())
-			writeResponse(responseBody, http.StatusInternalServerError, w, contextLogger)
-			return
-		}
-		writeResponse(responseBody, http.StatusOK, w, contextLogger)
+func NewEndpointLoggerMiddleware(ctx *APIContext, handler httprouter.Handle) httprouter.Handle {
+	return func(rw http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		ctx.logger.Infof("API: Endpoint Hit: %s %s%s\n", r.Host, r.URL.Path, r.Method)
+		handler(rw, r, ps)
 	}
 }
 
-func NewGetRecordHandler(hctx *HandlerContext) httprouter.Handle {
-	contextLogger := hctx.logger.WithFields(log.Fields{"handler": "getRecord"})
+func NewGetAllRecordsHandler(ctx *APIContext) httprouter.Handle {
+	logger := ctx.logger.WithFields(log.Fields{"handler": "getAllRecords"})
+	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+		records, err := ctx.ctrl.GetAllRecords()
+		if err != nil {
+			logger.Warnf("failed to get records from controller: %s", err.Error())
+			writeJSONResponse(w, logger, apischema.Error{Message: "Failed to receive data from controller"}, http.StatusInternalServerError)
+			return
+		}
+		recordsAPI := schemabuilder.BuildRecordsAPIFrom(records)
+		writeJSONResponse(w, logger, recordsAPI, http.StatusOK)
+	}
+}
+
+func NewGetRecordHandler(ctx *APIContext) httprouter.Handle {
+	logger := ctx.logger.WithFields(log.Fields{"handler": "getRecord"})
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		idStr := ps.ByName(IDParamName)
 		idInt, err := strconv.ParseUint(idStr, 10, 64)
 		if err != nil {
-			contextLogger.Warnf("failed to convert path parameter id: %s", err.Error())
-			code := http.StatusBadRequest
-			writeResponse(http.StatusText(code), code, w, contextLogger)
+			logger.Warnf("failed to convert path parameter id: %s", err.Error())
+			writeJSONResponse(w, logger, apischema.Error{Message: "Ivalid ID"}, http.StatusBadRequest)
 			return
 		}
-		responseBody, err := hctx.ctrl.GetRecord(idInt)
+		records, err := ctx.ctrl.GetRecord(idInt)
 		if err != nil {
-			contextLogger.Warnf("failed to get responce body: %s", err.Error())
-			code := http.StatusInternalServerError
-			writeResponse(http.StatusText(code), code, w, contextLogger)
+			logger.Warnf("failed to get records from controller: %s", err.Error())
+			writeJSONResponse(w, logger, apischema.Error{Message: "Failed to receive data from controller"}, http.StatusInternalServerError)
 			return
 		}
-		writeResponse(responseBody, http.StatusOK, w, contextLogger)
+		recordsAPI := schemabuilder.BuildRecordsAPIFrom(records)
+		writeJSONResponse(w, logger, recordsAPI, http.StatusOK)
 	}
 }
 
-func NewCreateRecordsHandler(hctx *HandlerContext) httprouter.Handle {
-	contextLogger := hctx.logger.WithFields(log.Fields{"handler": "createRecords"})
-	return func(w http.ResponseWriter, _ *http.Request, _ httprouter.Params) {
-		responseBody, err := hctx.ctrl.GetAllRecords()
+func NewCreateRecordsHandler(ctx *APIContext) httprouter.Handle {
+	logger := ctx.logger.WithFields(log.Fields{"handler": "createRecords"})
+	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+		// TODO: check content type
+		var recordsAPI []apischema.Record
+		err := readJSON(r.Body, recordsAPI)
+		defer r.Body.Close()
 		if err != nil {
-			contextLogger.Warnf("failed to get responce body: %s", err.Error())
-			writeResponse(responseBody, http.StatusAccepted, w, contextLogger)
+			logger.Warnf("failed to read JSON: %s", err.Error())
+			writeJSONResponse(w, logger, apischema.Error{Message: "Ivalid JSON"}, http.StatusBadRequest)
 			return
 		}
-		writeResponse(RecordCreatedMessage, http.StatusAccepted, w, contextLogger)
+		records := schemabuilder.BuildRecordsFrom(recordsAPI)
+		err = ctx.ctrl.CreateRecords(records)
+		if err != nil {
+			logger.Warnf("failed to get records from controller: %s", err.Error())
+			writeJSONResponse(w, logger, apischema.Error{Message: "Ivalid JSON"}, http.StatusBadRequest)
+			return
+		}
+		w.WriteHeader(http.StatusAccepted)
 	}
 }
 
-func writeResponse(body string, statusCode int, w http.ResponseWriter, logger log.Logger) {
-	// TODO: write JSON response
-	w.WriteHeader(statusCode)
-	_, err := fmt.Fprint(w, body)
+func readJSON(requestBody io.Reader, out any) error {
+	// TODO: prevent overflow (read by batches or set max size)
+	recordsJSON, err := io.ReadAll(requestBody)
 	if err != nil {
-		logger.Warnf("failed to write response: %s", err.Error())
+		return err
 	}
-	logger.Infof("response written\n%s", body)
+	err = json.Unmarshal(recordsJSON, &out)
+	if err != nil {
+		return err
+	}
+	return err
+}
+
+func writeJSONResponse(w http.ResponseWriter, logger log.Logger, body any, statusCode int) {
+	w.Header().Set("Content-Type", "application/json")
+	err := json.NewEncoder(w).Encode(body)
+	if err != nil {
+		logger.Warnf("failed to write JSON response: %s", err.Error())
+	}
+	w.WriteHeader(statusCode)
+	// TODO: do not log private info
+	logger.Infof("response written: %+v", body)
 }

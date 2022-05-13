@@ -34,12 +34,12 @@ type TableTests struct {
 func TestGetRecords(t *testing.T) {
 	logger := log.NewLogrusLogger()
 	ctrl := controller.New(logger)
-	hctx := &HandlerContext{ctrl, logger}
+	ctx := &APIContext{ctrl, logger}
 	tests := TableTests{
 		tt: []*TableTest{
 			{
 				testName:           "Get all records",
-				handle:             NewGetAllRecordsHandler(hctx),
+				handle:             NewGetAllRecordsHandler(ctx),
 				httpMethod:         http.MethodGet,
 				httpPath:           "/records",
 				expectedHTTPStatus: http.StatusOK,
@@ -47,7 +47,7 @@ func TestGetRecords(t *testing.T) {
 			},
 			{
 				testName:   "Get record by id 1",
-				handle:     NewGetRecordHandler(hctx),
+				handle:     NewGetRecordHandler(ctx),
 				httpMethod: http.MethodGet,
 				httpPath:   "/records/0",
 				ps: httprouter.Params{
@@ -58,7 +58,7 @@ func TestGetRecords(t *testing.T) {
 			},
 			{
 				testName:   "Get record by id 5",
-				handle:     NewGetRecordHandler(hctx),
+				handle:     NewGetRecordHandler(ctx),
 				httpMethod: http.MethodGet,
 				httpPath:   "/records/5",
 				ps: httprouter.Params{
@@ -69,7 +69,7 @@ func TestGetRecords(t *testing.T) {
 			},
 			{
 				testName:   "Returns 404 on missing record",
-				handle:     NewGetRecordHandler(hctx),
+				handle:     NewGetRecordHandler(ctx),
 				httpMethod: http.MethodGet,
 				httpPath:   "/records/a",
 				ps: httprouter.Params{
@@ -85,12 +85,12 @@ func TestGetRecords(t *testing.T) {
 func TestPostRecords(t *testing.T) {
 	logger := log.NewLogrusLogger()
 	ctrl := controller.New(logger)
-	hctx := &HandlerContext{ctrl, logger}
+	ctx := &APIContext{ctrl, logger}
 	tests := TableTests{
 		tt: []*TableTest{
 			{
 				testName:           "Post record",
-				handle:             NewCreateRecordsHandler(hctx),
+				handle:             NewCreateRecordsHandler(ctx),
 				httpMethod:         http.MethodPost,
 				httpPath:           "/records/",
 				expectedHTTPStatus: http.StatusAccepted,

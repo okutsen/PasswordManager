@@ -7,6 +7,7 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 
+	"github.com/okutsen/PasswordManager/schema/dbschema"
 	"github.com/okutsen/PasswordManager/internal/log"
 )
 
@@ -15,41 +16,39 @@ const (
 )
 
 type Controller interface {
-	GetAllRecords() (string, error)
-	GetRecord(uint64) (string, error)
-	CreateRecords() (string, error)
+	GetAllRecords() ([]dbschema.Record, error)
+	GetRecord(uint64) ([]dbschema.Record, error)
+	CreateRecords([]dbschema.Record) error
 }
 
 type API struct {
 	config *Config
-	hctx   *HandlerContext
+	ctx   *APIContext
 	server http.Server
+}
+
+type APIContext struct {
+	ctrl   Controller
+	logger log.Logger
 }
 
 func New(config *Config, ctrl Controller, logger log.Logger) *API {
 	return &API{
 		config: config,
-		hctx: &HandlerContext{
+		ctx: &APIContext{
 			ctrl:   ctrl,
 			logger: logger.WithFields(log.Fields{"service": "API"}),
 		},
 	}
 }
 
-func (api *API) endpointLogger(handler httprouter.Handle) httprouter.Handle {
-	return func(rw http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		api.hctx.logger.Infof("API: Endpoint Hit: %s %s%s\n", r.Host, r.URL.Path, r.Method)
-		handler(rw, r, ps)
-	}
-}
-
 func (api *API) Start() error {
-	api.hctx.logger.Info("server is starting")
+	api.ctx.logger.Info("API started")
 	router := httprouter.New()
 
-	router.GET("/records", api.endpointLogger(NewGetAllRecordsHandler(api.hctx)))
-	router.GET(fmt.Sprintf("/records/:%s", IDParamName), api.endpointLogger(NewGetRecordHandler(api.hctx)))
-	router.POST("/records", api.endpointLogger(NewCreateRecordsHandler(api.hctx)))
+	router.GET("/records", NewEndpointLoggerMiddleware(api.ctx, NewGetAllRecordsHandler(api.ctx)))
+	router.GET(fmt.Sprintf("/records/:%s", IDParamName), NewEndpointLoggerMiddleware(api.ctx, NewGetRecordHandler(api.ctx)))
+	router.POST("/records", NewEndpointLoggerMiddleware(api.ctx, NewCreateRecordsHandler(api.ctx)))
 
 	api.server = http.Server{Addr: api.config.Address(), Handler: router}
 
@@ -57,6 +56,6 @@ func (api *API) Start() error {
 }
 
 func (api *API) Stop(ctx context.Context) error {
-	api.hctx.logger.Infof("shutting down server")
+	api.ctx.logger.Infof("shutting down server")
 	return api.server.Shutdown(ctx)
 }
