@@ -45,7 +45,7 @@ func NewGetRecordHandler(ctx *APIContext) httprouter.Handle {
 		idInt, err := strconv.ParseUint(idStr, 10, 64)
 		if err != nil {
 			logger.Warnf("failed to convert path parameter id: %s", err.Error())
-			writeJSONResponse(w, logger, apischema.Error{Message: "Ivalid ID"}, http.StatusBadRequest)
+			writeJSONResponse(w, logger, apischema.Error{Message: "Invalid ID"}, http.StatusBadRequest)
 			return
 		}
 		records, err := ctx.ctrl.GetRecord(idInt)
