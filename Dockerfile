@@ -10,6 +10,7 @@ COPY cmd/ ./cmd
 COPY internal/ ./internal
 COPY config/ ./config
 COPY pkg/ ./pkg
+COPY schema/ ./schema
 
 
 RUN go build -o ./bin/pm ./cmd/
