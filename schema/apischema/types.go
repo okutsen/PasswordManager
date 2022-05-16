@@ -1,5 +1,10 @@
 package apischema
 
+const (
+	InvalidJSONMessage   = "Invalid JSON"
+	InternalErrorMessage = "Oops, something went wrong"
+)
+
 // TODO: add validator
 // TODO: add uuid (request id)
 type Record struct {
