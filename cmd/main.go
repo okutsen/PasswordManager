@@ -40,7 +40,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	//repository := repo.NewRepository(db)
+	// repository := repo.NewRepository(db)
 
 	serviceAPI := api.New(&api.Config{Port: cfg.API.Port}, ctrl, logger)
 
@@ -60,8 +60,7 @@ func main() {
 
 	err = db.Close()
 	if err != nil {
-		logger.Errorf("failed to close DB: %v", err)
-		os.Exit(1)
+		logger.Warnf("failed to close DB: %v", err)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), cfg.API.ShutdownTimeout)
