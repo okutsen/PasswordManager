@@ -37,6 +37,9 @@ migration_up: ## Up migrates
 migration_down: ## Drop migrates
 	migrate -path ${MIGRATIONS_PATH} -database ${DB_CONNECTION} down
 
+open_container: ## Opens postgres container
+	docker exec -it postgres sh
+
 clean:
 	go clean
 	rm ${TARGET}
