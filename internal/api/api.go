@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
 
 	"github.com/okutsen/PasswordManager/internal/log"
@@ -17,10 +18,10 @@ const (
 
 type Controller interface {
 	GetAllRecords() ([]*dbschema.Record, error)
-	GetRecord(uint64) (*dbschema.Record, error)
+	GetRecord(uuid.UUID) (*dbschema.Record, error)
 	CreateRecord(*dbschema.Record) error
 	UpdateRecord(*dbschema.Record) error
-	DeleteRecord(uint64) error
+	DeleteRecord(uuid.UUID) error
 }
 
 type API struct {

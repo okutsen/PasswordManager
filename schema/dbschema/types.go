@@ -1,8 +1,10 @@
 package dbschema
 
+import "github.com/google/uuid"
+
 // TODO: more fields (dateCreated, url, description)
 type Record struct {
-	ID       uint64
+	ID       uuid.UUID
 	Name     string
 	Login    string
 	Password string

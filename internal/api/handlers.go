@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"strconv"
 
+	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
 
 	"github.com/okutsen/PasswordManager/internal/log"
@@ -43,14 +43,14 @@ func NewGetRecordHandler(ctx *APIContext) httprouter.Handle {
 	logger := ctx.logger.WithFields(log.Fields{"handler": "GetRecord"})
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		idStr := ps.ByName(IDParamName)
-		idInt, err := strconv.ParseUint(idStr, 10, 64)
+		recordUUID, err := uuid.Parse(idStr)
 		if err != nil {
 			logger.Warnf("Failed to convert path parameter id: %s", err.Error())
 			writeJSONResponse(w, logger, 
 				apischema.Error{Message: apischema.InvalidJSONMessage}, http.StatusBadRequest)
 			return
 		}
-		record, err := ctx.ctrl.GetRecord(idInt)
+		record, err := ctx.ctrl.GetRecord(recordUUID)
 		if err != nil {
 			logger.Warnf("Failed to get records from controller: %s", err.Error())
 			writeJSONResponse(w, logger, 
@@ -119,14 +119,14 @@ func NewDeleteRecordHandler(ctx *APIContext) httprouter.Handle {
 	logger := ctx.logger.WithFields(log.Fields{"handler": "UpdateRecords"})
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		idStr := ps.ByName(IDParamName)
-		idInt, err := strconv.ParseUint(idStr, 10, 64)
+		recordUUID, err := uuid.Parse(idStr)
 		if err != nil {
 			logger.Warnf("Failed to convert path parameter id: %s", err.Error())
 			writeJSONResponse(w, logger, 
 				apischema.Error{Message: apischema.InvalidJSONMessage}, http.StatusBadRequest)
 			return
 		}
-		err = ctx.ctrl.DeleteRecord(idInt)
+		err = ctx.ctrl.DeleteRecord(recordUUID)
 		if err != nil {
 			logger.Warnf("Failed to get records from controller: %s", err.Error())
 			writeJSONResponse(w, logger, 
