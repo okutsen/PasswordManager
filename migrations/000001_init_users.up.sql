@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS users
     email text unique not null,
     login text unique not null,
     password text not null,
-    phone varchar unique,
+    phone text unique,
     created_at timestamp,
     updated_at timestamp
 );
