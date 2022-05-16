@@ -47,4 +47,4 @@ clean:
 help: ## Display this help screen
 	@grep -E -h '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
-.PHONY: dependencies build run docker_build docker_run docker_start docker_stop up migration_down migration_up
+.PHONY: dependencies build run docker_build docker_run docker_start docker_stop up migration_down migration_up open_container
