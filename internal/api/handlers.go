@@ -31,7 +31,7 @@ func NewGetAllRecordsHandler(ctx *APIContext) httprouter.Handle {
 		if err != nil {
 			logger.Warnf("Failed to get records from controller: %s", err.Error())
 			writeJSONResponse(w, logger, 
-				apischema.Error{Message: "Failed to receive data from controller"}, http.StatusInternalServerError)
+				apischema.Error{Message: apischema.InternalErrorMessage}, http.StatusInternalServerError)
 			return
 		}
 		recordsAPI := schemabuilder.BuildRecordsAPIFrom(records)
@@ -47,14 +47,14 @@ func NewGetRecordHandler(ctx *APIContext) httprouter.Handle {
 		if err != nil {
 			logger.Warnf("Failed to convert path parameter id: %s", err.Error())
 			writeJSONResponse(w, logger, 
-				apischema.Error{Message: "Ivalid ID"}, http.StatusBadRequest)
+				apischema.Error{Message: apischema.InvalidJSONMessage}, http.StatusBadRequest)
 			return
 		}
 		record, err := ctx.ctrl.GetRecord(idInt)
 		if err != nil {
 			logger.Warnf("Failed to get records from controller: %s", err.Error())
 			writeJSONResponse(w, logger, 
-				apischema.Error{Message: "Failed to receive data from controller"}, http.StatusInternalServerError)
+				apischema.Error{Message: apischema.InternalErrorMessage}, http.StatusInternalServerError)
 			return
 		}
 		// TODO: get record from db
@@ -72,7 +72,7 @@ func NewCreateRecordHandler(ctx *APIContext) httprouter.Handle {
 		if err != nil {
 			logger.Warnf("Failed to read JSON: %s", err.Error())
 			writeJSONResponse(w, logger, 
-				apischema.Error{Message: "Ivalid JSON"}, http.StatusBadRequest)
+				apischema.Error{Message: apischema.InvalidJSONMessage}, http.StatusBadRequest)
 			return
 		}
 		record := schemabuilder.BuildRecordFrom(recordAPI)
@@ -81,7 +81,7 @@ func NewCreateRecordHandler(ctx *APIContext) httprouter.Handle {
 		if err != nil {
 			logger.Warnf("Failed to get records from controller: %s", err.Error())
 			writeJSONResponse(w, logger, 
-				apischema.Error{Message: "Failed to receive data from controller"}, http.StatusInternalServerError)
+				apischema.Error{Message: apischema.InternalErrorMessage}, http.StatusInternalServerError)
 			return
 		}
 		// TODO: get record from db
@@ -99,7 +99,7 @@ func NewUpdateRecordHandler(ctx *APIContext) httprouter.Handle {
 		if err != nil {
 			logger.Warnf("Failed to read JSON: %s", err.Error())
 			writeJSONResponse(w, logger, 
-				apischema.Error{Message: "Ivalid JSON"}, http.StatusBadRequest)
+				apischema.Error{Message: apischema.InvalidJSONMessage}, http.StatusBadRequest)
 			return
 		}
 		record := schemabuilder.BuildRecordFrom(recordAPI)
@@ -107,7 +107,7 @@ func NewUpdateRecordHandler(ctx *APIContext) httprouter.Handle {
 		if err != nil {
 			logger.Warnf("Failed to get records from controller: %s", err.Error())
 			writeJSONResponse(w, logger, 
-				apischema.Error{Message: "Failed to receive data from controller"}, http.StatusInternalServerError)
+				apischema.Error{Message: apischema.InternalErrorMessage}, http.StatusInternalServerError)
 			return
 		}
 		// TODO: get record from db
@@ -123,14 +123,14 @@ func NewDeleteRecordHandler(ctx *APIContext) httprouter.Handle {
 		if err != nil {
 			logger.Warnf("Failed to convert path parameter id: %s", err.Error())
 			writeJSONResponse(w, logger, 
-				apischema.Error{Message: "Ivalid ID"}, http.StatusBadRequest)
+				apischema.Error{Message: apischema.InvalidJSONMessage}, http.StatusBadRequest)
 			return
 		}
 		err = ctx.ctrl.DeleteRecord(idInt)
 		if err != nil {
 			logger.Warnf("Failed to get records from controller: %s", err.Error())
 			writeJSONResponse(w, logger, 
-				apischema.Error{Message: "Failed to receive data from controller"}, http.StatusInternalServerError)
+				apischema.Error{Message: apischema.InternalErrorMessage}, http.StatusInternalServerError)
 			return
 		}
 		w.WriteHeader(http.StatusOK)
