@@ -5,6 +5,7 @@ MAIN_PATH=./cmd/main.go
 TARGET_PATH=$(GOPATH)/bin
 TARGET=${TARGET_PATH}/${NAME}
 DB_CONNECTION=postgresql://admin:12345@localhost:5432/password_manager?sslmode=disable
+MIGRATIONS_PATH=./migrations
 .DEFAULT_GOAL := help
 export PM_PORT=${PORT}
 
@@ -31,10 +32,10 @@ docker_stop: ## Delete an image and container with name "password-manager"
 up: dependencies build run ## Update dependencies, build the project and run it
 
 migration_up: ## Up migrates
-	migrate -path ./migrations -database ${DB_CONNECTION} up
+	migrate -path ${MIGRATIONS_PATH} -database ${DB_CONNECTION} up
 
 migration_down: ## Drop migrates
-	migrate -path ./migrations -database ${DB_CONNECTION} down
+	migrate -path ${MIGRATIONS_PATH} -database ${DB_CONNECTION} down
 
 clean:
 	go clean
