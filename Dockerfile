@@ -11,6 +11,7 @@ COPY internal/ ./internal
 COPY config/ ./config
 COPY pkg/ ./pkg
 COPY schema/ ./schema
+COPY migrations/ ./migrations
 
 
 RUN go build -o ./bin/pm ./cmd/
