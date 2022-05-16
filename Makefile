@@ -37,8 +37,8 @@ migration_up: ## Up migrates
 migration_down: ## Drop migrates
 	migrate -path ${MIGRATIONS_PATH} -database ${DB_CONNECTION} down
 
-open_container: ## Opens postgres container
-	docker exec -it postgres sh
+db_connect: ## Opens postgres container and connect to DB
+	docker exec -it postgres psql ${DB_CONNECTION}
 
 clean:
 	go clean
@@ -47,4 +47,4 @@ clean:
 help: ## Display this help screen
 	@grep -E -h '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
-.PHONY: dependencies build run docker_build docker_run docker_start docker_stop up migration_down migration_up open_container
+.PHONY: dependencies build run docker_build docker_run docker_start docker_stop up migration_down migration_up db_connect
