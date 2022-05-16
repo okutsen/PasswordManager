@@ -6,9 +6,11 @@ services:
     image: password_manager
     ports:
       - "8080:10000"
+    restart: always
     depends_on:
       - postgres
     container_name: password_manager
+
   postgres:
     image: postgres
     restart: always
