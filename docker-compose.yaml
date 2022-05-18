@@ -13,6 +13,11 @@ services:
 
   postgres:
     image: postgres
+    healthcheck:
+      test: [ "CMD", "pg_isready" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     restart: always
     environment:
       POSTGRES_PASSWORD: 12345
@@ -21,3 +26,19 @@ services:
     ports:
       - "5432:5432"
     container_name: postgres
+    networks:
+      - db_network
+
+  migrations:
+    image: migrate/migrate
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./migrations:/migrations
+    command: -path /migrations -database postgres://admin:12345@postgres:5432/password_manager?sslmode=disable up
+    networks:
+      - db_network
+
+networks:
+  db_network:
