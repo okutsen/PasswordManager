@@ -12,13 +12,15 @@ import (
 )
 
 const (
-	IDParamName = "recordName"
+	IDParamName = "id"
 )
 
 type Controller interface {
-	GetAllRecords() ([]dbschema.Record, error)
-	GetRecord(uint64) ([]dbschema.Record, error)
-	CreateRecords([]dbschema.Record) error
+	GetAllRecords() ([]*dbschema.Record, error)
+	GetRecord(uint64) (*dbschema.Record, error)
+	CreateRecord(*dbschema.Record) error
+	UpdateRecord(*dbschema.Record) error
+	DeleteRecord(uint64) error
 }
 
 type API struct {
@@ -48,7 +50,9 @@ func (api *API) Start() error {
 
 	router.GET("/records", NewEndpointLoggerMiddleware(api.ctx, NewGetAllRecordsHandler(api.ctx)))
 	router.GET(fmt.Sprintf("/records/:%s", IDParamName), NewEndpointLoggerMiddleware(api.ctx, NewGetRecordHandler(api.ctx)))
-	router.POST("/records", NewEndpointLoggerMiddleware(api.ctx, NewCreateRecordsHandler(api.ctx)))
+	router.POST("/records", NewEndpointLoggerMiddleware(api.ctx, NewCreateRecordHandler(api.ctx)))
+	router.PUT("/records", NewEndpointLoggerMiddleware(api.ctx, NewUpdateRecordHandler(api.ctx)))
+	router.DELETE(fmt.Sprintf("/records/:%s", IDParamName), NewEndpointLoggerMiddleware(api.ctx, NewDeleteRecordHandler(api.ctx)))
 
 	api.server = http.Server{Addr: api.config.Address(), Handler: router}
 

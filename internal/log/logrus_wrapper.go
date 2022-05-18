@@ -19,6 +19,8 @@ type LogrusLogger struct {
 		Errorf(format string, args ...any)
 		Fatal(v ...any)
 		Fatalf(format string, v ...any)
+		Debug(v ...any)
+		Debugf(format string, v ...any)
 		WithFields(fields logrus.Fields) *logrus.Entry
 	}
 }
@@ -46,6 +48,12 @@ func (l *LogrusLogger) Fatal(args ...any) {
 }
 func (l *LogrusLogger) Fatalf(format string, args ...any) {
 	l.logger.Fatalf(format, args...)
+}
+func (l *LogrusLogger) Debug(args ...any) {
+	l.logger.Debug(args...)
+}
+func (l *LogrusLogger) Debugf(format string, args ...any) {
+	l.logger.Debugf(format, args...)
 }
 func (l *LogrusLogger) WithFields(fields Fields) Logger {
 	return &LogrusLogger{
