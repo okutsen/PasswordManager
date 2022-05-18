@@ -90,7 +90,7 @@ func TestPostRecords(t *testing.T) {
 		tt: []*TableTest{
 			{
 				testName:           "Post record",
-				handle:             NewCreateRecordsHandler(ctx),
+				handle:             NewCreateRecordHandler(ctx),
 				httpMethod:         http.MethodPost,
 				httpPath:           "/records/",
 				expectedHTTPStatus: http.StatusAccepted,
