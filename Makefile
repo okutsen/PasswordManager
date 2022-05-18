@@ -37,7 +37,7 @@ migration_up: ## Up migrates
 migration_down: ## Drop migrates
 	migrate -path ${MIGRATIONS_PATH} -database ${DB_CONNECTION} down
 
-db_connect: ## Opens postgres container and connect to DB
+db_connect: ## Open postgres container and connect to DB
 	docker exec -it postgres psql ${DB_CONNECTION}
 
 clean:
