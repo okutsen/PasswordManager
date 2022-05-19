@@ -7,8 +7,8 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 
-	"github.com/okutsen/PasswordManager/schema/dbschema"
 	"github.com/okutsen/PasswordManager/internal/log"
+	"github.com/okutsen/PasswordManager/schema/dbschema"
 )
 
 const (
@@ -25,7 +25,7 @@ type Controller interface {
 
 type API struct {
 	config *Config
-	ctx   *APIContext
+	ctx    *APIContext
 	server http.Server
 }
 
