@@ -49,11 +49,11 @@ func (api *API) Start() error {
 	api.ctx.logger.Info("API started")
 	router := httprouter.New()
 
-	router.GET("/records", NewInitMiddleware(api.ctx, NewGetAllRecordsHandler))
-	router.GET(fmt.Sprintf("/records/:%s", IDParamName), NewInitMiddleware(api.ctx, NewGetRecordHandler))
-	router.POST("/records", NewInitMiddleware(api.ctx, NewCreateRecordHandler))
-	router.PUT("/records", NewInitMiddleware(api.ctx, NewUpdateRecordHandler))
-	router.DELETE(fmt.Sprintf("/records/:%s", IDParamName), NewInitMiddleware(api.ctx, NewDeleteRecordHandler))
+	router.GET("/records", InitMiddleware(api.ctx, NewGetAllRecordsHandler()))
+	router.GET(fmt.Sprintf("/records/:%s", IDParamName), InitMiddleware(api.ctx, NewGetRecordHandler()))
+	router.POST("/records", InitMiddleware(api.ctx, NewCreateRecordHandler()))
+	router.PUT("/records", InitMiddleware(api.ctx, NewUpdateRecordHandler()))
+	router.DELETE(fmt.Sprintf("/records/:%s", IDParamName), InitMiddleware(api.ctx, NewDeleteRecordHandler()))
 
 	api.server = http.Server{Addr: api.config.Address(), Handler: router}
 

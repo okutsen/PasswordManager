@@ -19,58 +19,62 @@ const (
 	CorrelationIDName = "X-Request-ID"
 )
 
-type HandlerContext struct {
+type RequestContext struct {
 	corID  uuid.UUID
-	ctrl   Controller
-	logger log.Logger
+	ps     httprouter.Params
+	*APIContext
 }
 
-func NewHandlerContextFrom(ctx *APIContext, corID uuid.UUID) *HandlerContext {
-	return &HandlerContext{
-		corID: corID,
-		ctrl:   ctx.ctrl,
-		logger: ctx.logger.WithFields(log.Fields{"corID": corID.String()}),
-	}
-}
-
-func NewHandlerContext(ctx *APIContext) *HandlerContext {
-	// Use uuid.UUID or just string
+func NewRequestContext(ctx *APIContext, ps httprouter.Params) *RequestContext {
 	newCorID := uuid.New()
 	ctx.logger.Debugf("Assigning new correlation id: %s", newCorID.String())
-	return &HandlerContext{
-		corID: newCorID,
-		ctrl:   ctx.ctrl,
-		logger: ctx.logger.WithFields(log.Fields{"corID": newCorID.String()}),
+	return &RequestContext{
+		corID:  newCorID,
+		ps: ps,
+		APIContext: ctx,
 	}
 }
 
+func NewRequestContextFrom(ctx *APIContext, ps httprouter.Params, corID uuid.UUID) *RequestContext {
+	ctx.logger.Debugf("Assigning correlation id: %s", corID.String())
+	return &RequestContext{
+		corID:  corID,
+		ps: ps,
+		APIContext: ctx,
+	}
+}
+
+type InnerHandlerFunc func(rw http.ResponseWriter, r *http.Request, ctx *RequestContext)
+
 // Name?
-func NewInitMiddleware(ctx *APIContext, next HandlerCreator) httprouter.Handle {
+func InitMiddleware(ctx *APIContext, next InnerHandlerFunc) httprouter.Handle {
 	return func(rw http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		// When to Info vs Debug
 		ctx.logger.Infof("Endpoint Hit: %s %s%s", r.Method, r.Host, r.URL.Path)
 		corIDStr := r.Header.Get(CorrelationIDName)
 		if corIDStr == "" {
-			next(NewHandlerContext(ctx))(rw, r, ps)
+			next(rw, r, NewRequestContext(ctx, ps))
 			return
 		}
 		corID, err := uuid.Parse(corIDStr)
 		if err != nil {
 			// Error or Warn?
 			ctx.logger.Warnf("Got invalid correlation id: %s", corIDStr)
-			next(NewHandlerContext(ctx))(rw, r, ps)
+			next(rw, r, NewRequestContext(ctx, ps))
 			return
 		}
-		next(NewHandlerContextFrom(ctx, corID))(rw, r, ps)
+		next(rw, r, NewRequestContextFrom(ctx, ps, corID))
 	}
 }
 
-type HandlerCreator func(hctx *HandlerContext) httprouter.Handle
-
-func NewGetAllRecordsHandler(hctx *HandlerContext) httprouter.Handle {
-	logger := hctx.logger.WithFields(log.Fields{"handler": "GetAllRecords"})
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-		records, err := hctx.ctrl.GetAllRecords()
+func NewGetAllRecordsHandler() InnerHandlerFunc {
+	// What should be done here again?
+	return func(w http.ResponseWriter, r *http.Request, rctx *RequestContext) {
+		logger := rctx.logger.WithFields(log.Fields{
+			"handler": "GetAllRecords", 
+			"corID": rctx.corID,
+		})
+		records, err := rctx.ctrl.GetAllRecords()
 		if err != nil {
 			logger.Warnf("Failed to get records from controller: %s", err.Error())
 			writeJSONResponse(w, logger,
@@ -82,10 +86,13 @@ func NewGetAllRecordsHandler(hctx *HandlerContext) httprouter.Handle {
 	}
 }
 
-func NewGetRecordHandler(hctx *HandlerContext) httprouter.Handle {
-	logger := hctx.logger.WithFields(log.Fields{"handler": "GetRecord"})
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		idStr := ps.ByName(IDParamName)
+func NewGetRecordHandler() InnerHandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request, rctx *RequestContext) {
+		logger := rctx.logger.WithFields(log.Fields{
+			"handler": "GetRecord", 
+			"corID": rctx.corID,
+		})
+		idStr := rctx.ps.ByName(IDParamName)
 		recordUUID, err := uuid.Parse(idStr)
 		if err != nil {
 			logger.Warnf("Failed to convert path parameter id: %s", err.Error())
@@ -93,7 +100,7 @@ func NewGetRecordHandler(hctx *HandlerContext) httprouter.Handle {
 				apischema.Error{Message: apischema.InvalidJSONMessage}, http.StatusBadRequest)
 			return
 		}
-		record, err := hctx.ctrl.GetRecord(recordUUID)
+		record, err := rctx.ctrl.GetRecord(recordUUID)
 		if err != nil {
 			logger.Warnf("Failed to get records from controller: %s", err.Error())
 			writeJSONResponse(w, logger,
@@ -105,9 +112,12 @@ func NewGetRecordHandler(hctx *HandlerContext) httprouter.Handle {
 	}
 }
 
-func NewCreateRecordHandler(hctx *HandlerContext) httprouter.Handle {
-	logger := hctx.logger.WithFields(log.Fields{"handler": "CreateRecords"})
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func NewCreateRecordHandler() InnerHandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request, rctx *RequestContext) {
+		logger := rctx.logger.WithFields(log.Fields{
+			"handler": "CreateRecord", 
+			"corID": rctx.corID,
+		})
 		// TODO: check content type
 		var recordAPI *apischema.Record
 		err := readJSON(r.Body, &recordAPI)
@@ -120,7 +130,7 @@ func NewCreateRecordHandler(hctx *HandlerContext) httprouter.Handle {
 		}
 		record := schemabuilder.BuildRecordFrom(recordAPI)
 		// TODO: if exists return err (409 Conflict)
-		err = hctx.ctrl.CreateRecord(record)
+		err = rctx.ctrl.CreateRecord(record)
 		if err != nil {
 			logger.Warnf("Failed to get records from controller: %s", err.Error())
 			writeJSONResponse(w, logger,
@@ -132,9 +142,12 @@ func NewCreateRecordHandler(hctx *HandlerContext) httprouter.Handle {
 	}
 }
 
-func NewUpdateRecordHandler(hctx *HandlerContext) httprouter.Handle {
-	logger := hctx.logger.WithFields(log.Fields{"handler": "UpdateRecords"})
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func NewUpdateRecordHandler() InnerHandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request, rctx *RequestContext) {
+		logger := rctx.logger.WithFields(log.Fields{
+			"handler": "UpdateRecords", 
+			"corID": rctx.corID,
+		})
 		// TODO: check content type
 		var recordAPI *apischema.Record
 		err := readJSON(r.Body, recordAPI)
@@ -146,7 +159,7 @@ func NewUpdateRecordHandler(hctx *HandlerContext) httprouter.Handle {
 			return
 		}
 		record := schemabuilder.BuildRecordFrom(recordAPI)
-		err = hctx.ctrl.CreateRecord(record)
+		err = rctx.ctrl.CreateRecord(record)
 		if err != nil {
 			logger.Warnf("Failed to get records from controller: %s", err.Error())
 			writeJSONResponse(w, logger,
@@ -158,10 +171,13 @@ func NewUpdateRecordHandler(hctx *HandlerContext) httprouter.Handle {
 	}
 }
 
-func NewDeleteRecordHandler(hctx *HandlerContext) httprouter.Handle {
-	logger := hctx.logger.WithFields(log.Fields{"handler": "UpdateRecords"})
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		idStr := ps.ByName(IDParamName)
+func NewDeleteRecordHandler() InnerHandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request, rctx *RequestContext) {
+		logger := rctx.logger.WithFields(log.Fields{
+			"handler": "DeleteRecords", 
+			"corID": rctx.corID,
+		})
+		idStr := rctx.ps.ByName(IDParamName)
 		recordUUID, err := uuid.Parse(idStr)
 		if err != nil {
 			logger.Warnf("Failed to convert path parameter id: %s", err.Error())
@@ -169,7 +185,7 @@ func NewDeleteRecordHandler(hctx *HandlerContext) httprouter.Handle {
 				apischema.Error{Message: apischema.InvalidJSONMessage}, http.StatusBadRequest)
 			return
 		}
-		err = hctx.ctrl.DeleteRecord(recordUUID)
+		err = rctx.ctrl.DeleteRecord(recordUUID)
 		if err != nil {
 			logger.Warnf("Failed to get records from controller: %s", err.Error())
 			writeJSONResponse(w, logger,

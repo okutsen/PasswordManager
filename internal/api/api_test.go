@@ -19,7 +19,7 @@ const (
 type TableTest struct {
 	// Create request for specified
 	testName   string
-	handle     httprouter.Handle
+	handle     InnerHandlerFunc
 	httpMethod string
 	httpPath   string
 	// TODO: constructs params with a func
@@ -33,14 +33,11 @@ type TableTests struct {
 }
 
 func TestGetRecords(t *testing.T) {
-	logger := log.NewLogrusLogger()
-	ctrl := controller.New(logger)
-	ctx := &APIContext{ctrl, logger}
 	tests := TableTests{
 		tt: []*TableTest{
 			{
 				testName:           "Get all records",
-				handle:             NewGetAllRecordsHandler(NewHandlerContext(ctx)),
+				handle:             NewGetAllRecordsHandler(),
 				httpMethod:         http.MethodGet,
 				httpPath:           "/records",
 				expectedHTTPStatus: http.StatusOK,
@@ -48,7 +45,7 @@ func TestGetRecords(t *testing.T) {
 			},
 			{
 				testName:   "Get record by id 1",
-				handle:     NewGetRecordHandler(NewHandlerContext(ctx)),
+				handle:     NewGetRecordHandler(),
 				httpMethod: http.MethodGet,
 				httpPath:   "/records/0",
 				ps: httprouter.Params{
@@ -59,7 +56,7 @@ func TestGetRecords(t *testing.T) {
 			},
 			{
 				testName:   "Get record by id 5",
-				handle:     NewGetRecordHandler(NewHandlerContext(ctx)),
+				handle:     NewGetRecordHandler(),
 				httpMethod: http.MethodGet,
 				httpPath:   "/records/5",
 				ps: httprouter.Params{
@@ -70,7 +67,7 @@ func TestGetRecords(t *testing.T) {
 			},
 			{
 				testName:   "Returns 404 on missing record",
-				handle:     NewGetRecordHandler(NewHandlerContext(ctx)),
+				handle:     NewGetRecordHandler(),
 				httpMethod: http.MethodGet,
 				httpPath:   "/records/a",
 				ps: httprouter.Params{
@@ -84,14 +81,11 @@ func TestGetRecords(t *testing.T) {
 }
 
 func TestPostRecords(t *testing.T) {
-	logger := log.NewLogrusLogger()
-	ctrl := controller.New(logger)
-	ctx := &APIContext{ctrl, logger}
 	tests := TableTests{
 		tt: []*TableTest{
 			{
 				testName:           "Post record",
-				handle:             NewCreateRecordHandler(NewHandlerContext(ctx)),
+				handle:             NewCreateRecordHandler(),
 				httpMethod:         http.MethodPost,
 				httpPath:           "/records/",
 				expectedHTTPStatus: http.StatusAccepted,
@@ -103,11 +97,14 @@ func TestPostRecords(t *testing.T) {
 
 func TableTestRunner(t *testing.T, tt TableTests) {
 	t.Helper()
+	logger := log.NewLogrusLogger()
+	ctrl := controller.New(logger)
+	ctx := &APIContext{ctrl, logger}
 	for _, test := range tt.tt {
 		t.Run(test.testName, func(t *testing.T) {
 			request := httptest.NewRequest(test.httpMethod, test.httpPath, nil)
 			response := httptest.NewRecorder()
-			test.handle(response, request, test.ps)
+			test.handle(response, request, NewRequestContext(ctx, test.ps))
 
 			assert(t, response.Code, test.expectedHTTPStatus, "Wrong status")
 			assert(t, response.Body.String(), test.expectedBody, "Wrong body")
