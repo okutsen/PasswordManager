@@ -3,12 +3,15 @@ package api
 import (
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/julienschmidt/httprouter"
 
+	"github.com/okutsen/PasswordManager/config"
 	"github.com/okutsen/PasswordManager/internal/controller"
 	"github.com/okutsen/PasswordManager/internal/log"
+	"github.com/okutsen/PasswordManager/internal/repo"
 )
 
 const (
@@ -33,13 +36,30 @@ type TableTests struct {
 
 func TestGetRecords(t *testing.T) {
 	logger := log.NewLogrusLogger()
-	ctrl := controller.New(logger)
+	cfg, err := config.NewConfig()
+	if err != nil {
+		logger.Errorf("failed to initialize config: %v", err)
+		os.Exit(1)
+	}
+	db, err := repo.New(&repo.Config{
+		Host:     cfg.DB.Host,
+		Port:     cfg.DB.Port,
+		DBName:   cfg.DB.DBName,
+		Username: cfg.DB.Username,
+		SSLMode:  cfg.DB.SSLMode,
+		Password: cfg.DB.Password,
+	})
+	if err != nil {
+		logger.Errorf("failed to initialize DB: %v", err)
+		os.Exit(1)
+	}
+	ctrl := controller.New(logger, *db)
 	ctx := &APIContext{ctrl, logger}
 	tests := TableTests{
 		tt: []*TableTest{
 			{
 				testName:           "Get all records",
-				handle:             NewGetAllRecordsHandler(ctx),
+				handle:             NewAllRecordsHandler(ctx),
 				httpMethod:         http.MethodGet,
 				httpPath:           "/records",
 				expectedHTTPStatus: http.StatusOK,
@@ -47,7 +67,7 @@ func TestGetRecords(t *testing.T) {
 			},
 			{
 				testName:   "Get record by id 1",
-				handle:     NewGetRecordHandler(ctx),
+				handle:     NewRecordHandler(ctx),
 				httpMethod: http.MethodGet,
 				httpPath:   "/records/0",
 				ps: httprouter.Params{
@@ -58,7 +78,7 @@ func TestGetRecords(t *testing.T) {
 			},
 			{
 				testName:   "Get record by id 5",
-				handle:     NewGetRecordHandler(ctx),
+				handle:     NewRecordHandler(ctx),
 				httpMethod: http.MethodGet,
 				httpPath:   "/records/5",
 				ps: httprouter.Params{
@@ -69,7 +89,7 @@ func TestGetRecords(t *testing.T) {
 			},
 			{
 				testName:   "Returns 404 on missing record",
-				handle:     NewGetRecordHandler(ctx),
+				handle:     NewRecordHandler(ctx),
 				httpMethod: http.MethodGet,
 				httpPath:   "/records/a",
 				ps: httprouter.Params{
@@ -84,7 +104,24 @@ func TestGetRecords(t *testing.T) {
 
 func TestPostRecords(t *testing.T) {
 	logger := log.NewLogrusLogger()
-	ctrl := controller.New(logger)
+	cfg, err := config.NewConfig()
+	if err != nil {
+		logger.Errorf("failed to initialize config: %v", err)
+		os.Exit(1)
+	}
+	db, err := repo.New(&repo.Config{
+		Host:     cfg.DB.Host,
+		Port:     cfg.DB.Port,
+		DBName:   cfg.DB.DBName,
+		Username: cfg.DB.Username,
+		SSLMode:  cfg.DB.SSLMode,
+		Password: cfg.DB.Password,
+	})
+	if err != nil {
+		logger.Errorf("failed to initialize DB: %v", err)
+		os.Exit(1)
+	}
+	ctrl := controller.New(logger, *db)
 	ctx := &APIContext{ctrl, logger}
 	tests := TableTests{
 		tt: []*TableTest{
