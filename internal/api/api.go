@@ -16,7 +16,7 @@ const (
 )
 
 type Controller interface {
-	AllRecords() ([]*dbschema.Record, error)
+	AllRecords() ([]dbschema.Record, error)
 	GetRecord(uint64) (*dbschema.Record, error)
 	CreateRecord(*dbschema.Record) error
 	UpdateRecord(*dbschema.Record) error
