@@ -24,10 +24,10 @@ func NewEndpointLoggerMiddleware(ctx *APIContext, handler httprouter.Handle) htt
 	}
 }
 
-func NewGetAllRecordsHandler(ctx *APIContext) httprouter.Handle {
+func NewAllRecordsHandler(ctx *APIContext) httprouter.Handle {
 	logger := ctx.logger.WithFields(log.Fields{"handler": "GetAllRecords"})
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-		records, err := ctx.ctrl.GetAllRecords()
+		records, err := ctx.ctrl.AllRecords()
 		if err != nil {
 			logger.Warnf("Failed to get records from controller: %s", err.Error())
 			writeJSONResponse(w, logger,
@@ -39,7 +39,7 @@ func NewGetAllRecordsHandler(ctx *APIContext) httprouter.Handle {
 	}
 }
 
-func NewGetRecordHandler(ctx *APIContext) httprouter.Handle {
+func NewRecordHandler(ctx *APIContext) httprouter.Handle {
 	logger := ctx.logger.WithFields(log.Fields{"handler": "GetRecord"})
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		idStr := ps.ByName(IDParamName)
@@ -77,7 +77,7 @@ func NewCreateRecordHandler(ctx *APIContext) httprouter.Handle {
 		}
 		record := schemabuilder.BuildRecordFrom(recordAPI)
 		// TODO: if exists return err (409 Conflict)
-		err = ctx.ctrl.CreateRecord(record)
+		err = ctx.ctrl.CreateRecord(&record)
 		if err != nil {
 			logger.Warnf("Failed to get records from controller: %s", err.Error())
 			writeJSONResponse(w, logger,
@@ -85,7 +85,7 @@ func NewCreateRecordHandler(ctx *APIContext) httprouter.Handle {
 			return
 		}
 		// TODO: get record from db
-		writeJSONResponse(w, logger, schemabuilder.BuildRecordAPIFrom(record), http.StatusAccepted)
+		writeJSONResponse(w, logger, schemabuilder.BuildRecordAPIFrom(&record), http.StatusAccepted)
 	}
 }
 
@@ -103,7 +103,7 @@ func NewUpdateRecordHandler(ctx *APIContext) httprouter.Handle {
 			return
 		}
 		record := schemabuilder.BuildRecordFrom(recordAPI)
-		err = ctx.ctrl.CreateRecord(record)
+		err = ctx.ctrl.CreateRecord(&record)
 		if err != nil {
 			logger.Warnf("Failed to get records from controller: %s", err.Error())
 			writeJSONResponse(w, logger,
@@ -111,7 +111,7 @@ func NewUpdateRecordHandler(ctx *APIContext) httprouter.Handle {
 			return
 		}
 		// TODO: get record from db
-		writeJSONResponse(w, logger, schemabuilder.BuildRecordAPIFrom(record), http.StatusAccepted)
+		writeJSONResponse(w, logger, schemabuilder.BuildRecordAPIFrom(&record), http.StatusAccepted)
 	}
 }
 
