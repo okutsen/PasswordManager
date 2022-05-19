@@ -16,7 +16,7 @@ const (
 )
 
 type Controller interface {
-	GetAllRecords() ([]*dbschema.Record, error)
+	AllRecords() ([]*dbschema.Record, error)
 	GetRecord(uint64) (*dbschema.Record, error)
 	CreateRecord(*dbschema.Record) error
 	UpdateRecord(*dbschema.Record) error
@@ -48,8 +48,8 @@ func (api *API) Start() error {
 	api.ctx.logger.Info("API started")
 	router := httprouter.New()
 
-	router.GET("/records", NewEndpointLoggerMiddleware(api.ctx, NewGetAllRecordsHandler(api.ctx)))
-	router.GET(fmt.Sprintf("/records/:%s", IDParamName), NewEndpointLoggerMiddleware(api.ctx, NewGetRecordHandler(api.ctx)))
+	router.GET("/records", NewEndpointLoggerMiddleware(api.ctx, NewAllRecordsHandler(api.ctx)))
+	router.GET(fmt.Sprintf("/records/:%s", IDParamName), NewEndpointLoggerMiddleware(api.ctx, NewRecordHandler(api.ctx)))
 	router.POST("/records", NewEndpointLoggerMiddleware(api.ctx, NewCreateRecordHandler(api.ctx)))
 	router.PUT("/records", NewEndpointLoggerMiddleware(api.ctx, NewUpdateRecordHandler(api.ctx)))
 	router.DELETE(fmt.Sprintf("/records/:%s", IDParamName), NewEndpointLoggerMiddleware(api.ctx, NewDeleteRecordHandler(api.ctx)))
