@@ -25,8 +25,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	ctrl := controller.New(logger)
-
 	db, err := repo.New(&repo.Config{
 		Host:     cfg.DB.Host,
 		Port:     cfg.DB.Port,
@@ -34,12 +32,14 @@ func main() {
 		Username: cfg.DB.Username,
 		SSLMode:  cfg.DB.SSLMode,
 		Password: cfg.DB.Password,
-	}, logger)
+	})
 	if err != nil {
 		logger.Errorf("failed to initialize DB: %v", err)
 		os.Exit(1)
 	}
+	logger.Infof("DB is started")
 
+	ctrl := controller.New(logger, *db)
 	// repository := repo.NewRepository(db)
 
 	serviceAPI := api.New(&api.Config{Port: cfg.API.Port}, ctrl, logger)
