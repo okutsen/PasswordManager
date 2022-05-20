@@ -22,25 +22,22 @@ const (
 type RequestContext struct {
 	corID  uuid.UUID
 	ps     httprouter.Params
-	*APIContext
 }
 
-func NewRequestContext(ctx *APIContext, ps httprouter.Params) *RequestContext {
+func NewRequestContext(ps httprouter.Params) *RequestContext {
 	newCorID := uuid.New()
-	ctx.logger.Debugf("Assigning new correlation id: %s", newCorID.String())
+	// ctx.logger.Debugf("Assigning new correlation id: %s", newCorID.String())
 	return &RequestContext{
 		corID:  newCorID,
 		ps: ps,
-		APIContext: ctx,
 	}
 }
 
-func NewRequestContextFrom(ctx *APIContext, ps httprouter.Params, corID uuid.UUID) *RequestContext {
-	ctx.logger.Debugf("Assigning correlation id: %s", corID.String())
+func NewRequestContextFrom(ps httprouter.Params, corID uuid.UUID) *RequestContext {
+	// ctx.logger.Debugf("Assigning correlation id: %s", corID.String())
 	return &RequestContext{
 		corID:  corID,
 		ps: ps,
-		APIContext: ctx,
 	}
 }
 
@@ -53,28 +50,27 @@ func InitMiddleware(ctx *APIContext, next InnerHandlerFunc) httprouter.Handle {
 		ctx.logger.Infof("Endpoint Hit: %s %s%s", r.Method, r.Host, r.URL.Path)
 		corIDStr := r.Header.Get(CorrelationIDName)
 		if corIDStr == "" {
-			next(rw, r, NewRequestContext(ctx, ps))
+			next(rw, r, NewRequestContext(ps))
 			return
 		}
 		corID, err := uuid.Parse(corIDStr)
 		if err != nil {
 			// Error or Warn?
 			ctx.logger.Warnf("Got invalid correlation id: %s", corIDStr)
-			next(rw, r, NewRequestContext(ctx, ps))
+			next(rw, r, NewRequestContext(ps))
 			return
 		}
-		next(rw, r, NewRequestContextFrom(ctx, ps, corID))
+		next(rw, r, NewRequestContextFrom(ps, corID))
 	}
 }
 
-func NewGetAllRecordsHandler() InnerHandlerFunc {
-	// What should be done here again?
+func NewGetAllRecordsHandler(apictx *APIContext) InnerHandlerFunc {
+	logger := apictx.logger.WithFields(log.Fields{"handler": "GetAllRecords"})
 	return func(w http.ResponseWriter, r *http.Request, rctx *RequestContext) {
-		logger := rctx.logger.WithFields(log.Fields{
-			"handler": "GetAllRecords", 
+		logger = logger.WithFields(log.Fields{
 			"corID": rctx.corID,
 		})
-		records, err := rctx.ctrl.GetAllRecords()
+		records, err := apictx.ctrl.GetAllRecords()
 		if err != nil {
 			logger.Warnf("Failed to get records from controller: %s", err.Error())
 			writeJSONResponse(w, logger,
@@ -86,10 +82,12 @@ func NewGetAllRecordsHandler() InnerHandlerFunc {
 	}
 }
 
-func NewGetRecordHandler() InnerHandlerFunc {
+func NewGetRecordHandler(apictx *APIContext) InnerHandlerFunc {
+	logger := apictx.logger.WithFields(log.Fields{
+		"handler": "GetRecord",
+	})
 	return func(w http.ResponseWriter, r *http.Request, rctx *RequestContext) {
-		logger := rctx.logger.WithFields(log.Fields{
-			"handler": "GetRecord", 
+		logger := logger.WithFields(log.Fields{
 			"corID": rctx.corID,
 		})
 		idStr := rctx.ps.ByName(IDParamName)
@@ -100,7 +98,7 @@ func NewGetRecordHandler() InnerHandlerFunc {
 				apischema.Error{Message: apischema.InvalidJSONMessage}, http.StatusBadRequest)
 			return
 		}
-		record, err := rctx.ctrl.GetRecord(recordUUID)
+		record, err := apictx.ctrl.GetRecord(recordUUID)
 		if err != nil {
 			logger.Warnf("Failed to get records from controller: %s", err.Error())
 			writeJSONResponse(w, logger,
@@ -112,10 +110,12 @@ func NewGetRecordHandler() InnerHandlerFunc {
 	}
 }
 
-func NewCreateRecordHandler() InnerHandlerFunc {
+func NewCreateRecordHandler(apictx *APIContext) InnerHandlerFunc {
+	logger := apictx.logger.WithFields(log.Fields{
+		"handler": "CreateRecord",
+	})
 	return func(w http.ResponseWriter, r *http.Request, rctx *RequestContext) {
-		logger := rctx.logger.WithFields(log.Fields{
-			"handler": "CreateRecord", 
+		logger := logger.WithFields(log.Fields{
 			"corID": rctx.corID,
 		})
 		// TODO: check content type
@@ -130,7 +130,7 @@ func NewCreateRecordHandler() InnerHandlerFunc {
 		}
 		record := schemabuilder.BuildRecordFrom(recordAPI)
 		// TODO: if exists return err (409 Conflict)
-		err = rctx.ctrl.CreateRecord(record)
+		err = apictx.ctrl.CreateRecord(record)
 		if err != nil {
 			logger.Warnf("Failed to get records from controller: %s", err.Error())
 			writeJSONResponse(w, logger,
@@ -142,10 +142,12 @@ func NewCreateRecordHandler() InnerHandlerFunc {
 	}
 }
 
-func NewUpdateRecordHandler() InnerHandlerFunc {
+func NewUpdateRecordHandler(apictx *APIContext) InnerHandlerFunc {
+	logger := apictx.logger.WithFields(log.Fields{
+		"handler": "UpdateRecords",
+	})
 	return func(w http.ResponseWriter, r *http.Request, rctx *RequestContext) {
-		logger := rctx.logger.WithFields(log.Fields{
-			"handler": "UpdateRecords", 
+		logger := logger.WithFields(log.Fields{
 			"corID": rctx.corID,
 		})
 		// TODO: check content type
@@ -159,7 +161,7 @@ func NewUpdateRecordHandler() InnerHandlerFunc {
 			return
 		}
 		record := schemabuilder.BuildRecordFrom(recordAPI)
-		err = rctx.ctrl.CreateRecord(record)
+		err = apictx.ctrl.CreateRecord(record)
 		if err != nil {
 			logger.Warnf("Failed to get records from controller: %s", err.Error())
 			writeJSONResponse(w, logger,
@@ -171,10 +173,12 @@ func NewUpdateRecordHandler() InnerHandlerFunc {
 	}
 }
 
-func NewDeleteRecordHandler() InnerHandlerFunc {
+func NewDeleteRecordHandler(apictx *APIContext) InnerHandlerFunc {
+	logger := apictx.logger.WithFields(log.Fields{
+		"handler": "DeleteRecords",
+	})
 	return func(w http.ResponseWriter, r *http.Request, rctx *RequestContext) {
-		logger := rctx.logger.WithFields(log.Fields{
-			"handler": "DeleteRecords", 
+		logger := logger.WithFields(log.Fields{
 			"corID": rctx.corID,
 		})
 		idStr := rctx.ps.ByName(IDParamName)
@@ -185,7 +189,7 @@ func NewDeleteRecordHandler() InnerHandlerFunc {
 				apischema.Error{Message: apischema.InvalidJSONMessage}, http.StatusBadRequest)
 			return
 		}
-		err = rctx.ctrl.DeleteRecord(recordUUID)
+		err = apictx.ctrl.DeleteRecord(recordUUID)
 		if err != nil {
 			logger.Warnf("Failed to get records from controller: %s", err.Error())
 			writeJSONResponse(w, logger,
