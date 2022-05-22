@@ -1,4 +1,4 @@
-NAME=Password-Manager
+NAME=PasswordManager
 PORT=10000
 DOCKER_NAME=password-manager
 MAIN_PATH=./cmd/main.go
