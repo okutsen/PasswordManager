@@ -20,51 +20,35 @@ const (
 )
 
 type RequestContext struct {
-	corID  uuid.UUID
-	ps     httprouter.Params
+	corID uuid.UUID
+	ps    httprouter.Params
 }
 
-func NewRequestContext(ps httprouter.Params) *RequestContext {
-	newCorID := uuid.New()
-	// ctx.logger.Debugf("Assigning new correlation id: %s", newCorID.String())
-	return &RequestContext{
-		corID:  newCorID,
-		ps: ps,
-	}
-}
-
-func NewRequestContextFrom(ps httprouter.Params, corID uuid.UUID) *RequestContext {
-	// ctx.logger.Debugf("Assigning correlation id: %s", corID.String())
-	return &RequestContext{
-		corID:  corID,
-		ps: ps,
-	}
-}
-
-type InnerHandlerFunc func(rw http.ResponseWriter, r *http.Request, ctx *RequestContext)
+type HandlerFunc func(rw http.ResponseWriter, r *http.Request, ctx *RequestContext)
 
 // Name?
-func InitMiddleware(ctx *APIContext, next InnerHandlerFunc) httprouter.Handle {
+func InitMiddleware(ctx *APIContext, next HandlerFunc) httprouter.Handle {
 	return func(rw http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		// When to Info vs Debug
-		ctx.logger.Infof("Endpoint Hit: %s %s%s", r.Method, r.Host, r.URL.Path)
+		ctx.logger.Debugf("Endpoint Hit: %s %s%s", r.Method, r.Host, r.URL.Path)
 		corIDStr := r.Header.Get(CorrelationIDName)
-		if corIDStr == "" {
-			next(rw, r, NewRequestContext(ps))
-			return
-		}
-		corID, err := uuid.Parse(corIDStr)
-		if err != nil {
-			// Error or Warn?
-			ctx.logger.Warnf("Got invalid correlation id: %s", corIDStr)
-			next(rw, r, NewRequestContext(ps))
-			return
-		}
-		next(rw, r, NewRequestContextFrom(ps, corID))
+		corID := parseRequestID(corIDStr, ctx.logger)
+		next(rw, r, &RequestContext{corID: corID, ps: ps})
 	}
 }
 
-func NewGetAllRecordsHandler(apictx *APIContext) InnerHandlerFunc {
+func parseRequestID(idStr string, logger log.Logger) uuid.UUID {
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		logger.Warnf("Invalid corID <%s>: %s", idStr, err)
+		newID := uuid.New()
+		logger.Debugf("Setting new corID: %s", newID.String())
+		return newID
+	}
+	return id
+}
+
+func NewGetAllRecordsHandler(apictx *APIContext) HandlerFunc {
 	logger := apictx.logger.WithFields(log.Fields{"handler": "GetAllRecords"})
 	return func(w http.ResponseWriter, r *http.Request, rctx *RequestContext) {
 		logger = logger.WithFields(log.Fields{
@@ -82,7 +66,7 @@ func NewGetAllRecordsHandler(apictx *APIContext) InnerHandlerFunc {
 	}
 }
 
-func NewGetRecordHandler(apictx *APIContext) InnerHandlerFunc {
+func NewGetRecordHandler(apictx *APIContext) HandlerFunc {
 	logger := apictx.logger.WithFields(log.Fields{
 		"handler": "GetRecord",
 	})
@@ -110,7 +94,7 @@ func NewGetRecordHandler(apictx *APIContext) InnerHandlerFunc {
 	}
 }
 
-func NewCreateRecordHandler(apictx *APIContext) InnerHandlerFunc {
+func NewCreateRecordHandler(apictx *APIContext) HandlerFunc {
 	logger := apictx.logger.WithFields(log.Fields{
 		"handler": "CreateRecord",
 	})
@@ -142,7 +126,7 @@ func NewCreateRecordHandler(apictx *APIContext) InnerHandlerFunc {
 	}
 }
 
-func NewUpdateRecordHandler(apictx *APIContext) InnerHandlerFunc {
+func NewUpdateRecordHandler(apictx *APIContext) HandlerFunc {
 	logger := apictx.logger.WithFields(log.Fields{
 		"handler": "UpdateRecords",
 	})
@@ -173,7 +157,7 @@ func NewUpdateRecordHandler(apictx *APIContext) InnerHandlerFunc {
 	}
 }
 
-func NewDeleteRecordHandler(apictx *APIContext) InnerHandlerFunc {
+func NewDeleteRecordHandler(apictx *APIContext) HandlerFunc {
 	logger := apictx.logger.WithFields(log.Fields{
 		"handler": "DeleteRecords",
 	})
