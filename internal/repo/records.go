@@ -3,6 +3,8 @@ package repo
 import (
 	"fmt"
 
+	"gorm.io/gorm/clause"
+
 	"github.com/okutsen/PasswordManager/schema/dbschema"
 )
 
@@ -47,7 +49,7 @@ func (r *Records) RecordByIDFromDB(id uint64) (*dbschema.Record, error) {
 }
 
 func (r *Records) UpdateRecordInDB(record *dbschema.Record) (*dbschema.Record, error) {
-	result := r.repo.db.Model(record).Updates(record)
+	result := r.repo.db.Model(record).Clauses(clause.Returning{}).Updates(record)
 	err := result.Error
 	if err != nil {
 		return nil, fmt.Errorf("failed to update record in db: %w", err)
