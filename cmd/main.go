@@ -37,12 +37,15 @@ func main() {
 		logger.Errorf("failed to initialize DB: %v", err)
 		os.Exit(1)
 	}
-	logger.Infof("DB is started")
+	logger.Info("DB is started")
 
-	ctrl := controller.New(logger, *db)
-	// repository := repo.NewRepository(db)
+	usersRepo := repo.NewUsersRepo(db)
+	recordsRepo := repo.NewRecordsRepo(db)
 
-	serviceAPI := api.New(&api.Config{Port: cfg.API.Port}, ctrl, logger)
+	usersController := controller.NewUsers(logger, usersRepo)
+	recordsController := controller.NewRecords(logger, recordsRepo)
+
+	serviceAPI := api.New(&api.Config{Port: cfg.API.Port}, recordsController, usersController, logger)
 
 	go func() {
 		err = serviceAPI.Start()
