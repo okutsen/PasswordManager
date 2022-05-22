@@ -67,7 +67,7 @@ func TestGetRecords(t *testing.T) {
 			},
 			{
 				testName:   "Get record by id 1",
-				handle:     NewRecordHandler(ctx),
+				handle:     NewRecordByIDHandler(ctx),
 				httpMethod: http.MethodGet,
 				httpPath:   "/records/0",
 				ps: httprouter.Params{
@@ -78,7 +78,7 @@ func TestGetRecords(t *testing.T) {
 			},
 			{
 				testName:   "Get record by id 5",
-				handle:     NewRecordHandler(ctx),
+				handle:     NewRecordByIDHandler(ctx),
 				httpMethod: http.MethodGet,
 				httpPath:   "/records/5",
 				ps: httprouter.Params{
@@ -89,7 +89,7 @@ func TestGetRecords(t *testing.T) {
 			},
 			{
 				testName:   "Returns 404 on missing record",
-				handle:     NewRecordHandler(ctx),
+				handle:     NewRecordByIDHandler(ctx),
 				httpMethod: http.MethodGet,
 				httpPath:   "/records/a",
 				ps: httprouter.Params{
