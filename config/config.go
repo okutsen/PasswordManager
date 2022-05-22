@@ -20,10 +20,10 @@ type APIConfig struct {
 type DBConfig struct {
 	Host     string `envConfig:"PM_DB_HOST" default:"localhost"`
 	Port     string `envConfig:"PM_DB_PORT" default:"5432"`
-	DBName   string `envConfig:"PM_PM" default:"password_manager"`
-	Username string `envConfig:"PM_USERNAME" default:"admin"`
-	SSLMode  string `envConfig:"SSL_MODE" default:"disable"`
-	Password string `envConfig:"PM_PASSWORD" default:"12345"`
+	DBName   string `envConfig:"PM_DB_NAME" default:"password_manager"`
+	Username string `envConfig:"PM_DB_USERNAME" default:"admin"`
+	Password string `envConfig:"PM_DB_PASSWORD" default:"12345"`
+	SSLMode  string `envConfig:"PM_DB_SSL_MODE" default:"disable"`
 }
 
 func NewConfig() (*Config, error) {
