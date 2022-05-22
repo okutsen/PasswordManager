@@ -2,25 +2,35 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
 
 	"github.com/okutsen/PasswordManager/internal/log"
-	"github.com/okutsen/PasswordManager/schema/dbschema"
+	"github.com/okutsen/PasswordManager/schema/apischema"
 )
 
 const (
 	IDParamName = "id"
 )
 
-type Controller interface {
-	AllRecords() ([]dbschema.Record, error)
-	GetRecord(uint64) (*dbschema.Record, error)
-	CreateRecord(*dbschema.Record) error
-	UpdateRecord(*dbschema.Record) error
-	DeleteRecord(uint64) error
+type RecordsController interface {
+	AllRecords() ([]apischema.Record, error)
+	Record(id uint64) (*apischema.Record, error)
+	CreateRecord(record *apischema.Record) (*apischema.Record, error)
+	UpdateRecord(id uint64, record *apischema.Record) (*apischema.Record, error)
+	DeleteRecord(id uint64) error
+}
+
+type UsersController interface {
+	AllUsers() ([]apischema.User, error)
+	User(id uint64) (*apischema.User, error)
+	CreateUser(user *apischema.User) (*apischema.User, error)
+	UpdateUser(id uint64, user *apischema.User) (*apischema.User, error)
+	DeleteUser(id uint64) error
 }
 
 type API struct {
@@ -30,16 +40,18 @@ type API struct {
 }
 
 type APIContext struct {
-	ctrl   Controller
-	logger log.Logger
+	recordsController RecordsController
+	usersController   UsersController
+	logger            log.Logger
 }
 
-func New(config *Config, ctrl Controller, logger log.Logger) *API {
+func New(config *Config, ctrlRecords RecordsController, ctrlUsers UsersController, logger log.Logger) *API {
 	return &API{
 		config: config,
 		ctx: &APIContext{
-			ctrl:   ctrl,
-			logger: logger.WithFields(log.Fields{"service": "API"}),
+			recordsController: ctrlRecords,
+			usersController:   ctrlUsers,
+			logger:            logger.WithFields(log.Fields{"service": "API"}),
 		},
 	}
 }
@@ -48,11 +60,17 @@ func (api *API) Start() error {
 	api.ctx.logger.Info("API started")
 	router := httprouter.New()
 
-	router.GET("/records", NewEndpointLoggerMiddleware(api.ctx, NewAllRecordsHandler(api.ctx)))
-	router.GET(fmt.Sprintf("/records/:%s", IDParamName), NewEndpointLoggerMiddleware(api.ctx, NewRecordHandler(api.ctx)))
-	router.POST("/records", NewEndpointLoggerMiddleware(api.ctx, NewCreateRecordHandler(api.ctx)))
-	router.PUT("/records", NewEndpointLoggerMiddleware(api.ctx, NewUpdateRecordHandler(api.ctx)))
-	router.DELETE(fmt.Sprintf("/records/:%s", IDParamName), NewEndpointLoggerMiddleware(api.ctx, NewDeleteRecordHandler(api.ctx)))
+	router.GET("/records", loggerMiddleware(api.ctx, NewAllRecordsHandler(api.ctx)))
+	router.GET(fmt.Sprintf("/records/:%s", IDParamName), loggerMiddleware(api.ctx, NewRecordByIDHandler(api.ctx)))
+	router.POST("/records", loggerMiddleware(api.ctx, NewCreateRecordHandler(api.ctx)))
+	router.PUT(fmt.Sprintf("/records/:%s", IDParamName), loggerMiddleware(api.ctx, NewUpdateRecordHandler(api.ctx)))
+	router.DELETE(fmt.Sprintf("/records/:%s", IDParamName), loggerMiddleware(api.ctx, NewDeleteRecordHandler(api.ctx)))
+
+	router.GET("/users", loggerMiddleware(api.ctx, AllUsersHandler(api.ctx)))
+	router.GET(fmt.Sprintf("/users/:%s", IDParamName), loggerMiddleware(api.ctx, UserByIdHandler(api.ctx)))
+	router.POST("/users", loggerMiddleware(api.ctx, CreateUserHandler(api.ctx)))
+	router.PUT(fmt.Sprintf("/users/:%s", IDParamName), loggerMiddleware(api.ctx, UpdateUserHandler(api.ctx)))
+	router.DELETE(fmt.Sprintf("/users/:%s", IDParamName), loggerMiddleware(api.ctx, DeleteUserHandler(api.ctx)))
 
 	api.server = http.Server{Addr: api.config.Address(), Handler: router}
 
@@ -62,4 +80,40 @@ func (api *API) Start() error {
 func (api *API) Stop(ctx context.Context) error {
 	api.ctx.logger.Infof("shutting down server")
 	return api.server.Shutdown(ctx)
+}
+
+func loggerMiddleware(ctx *APIContext, handler httprouter.Handle) httprouter.Handle {
+	return func(rw http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		ctx.logger.Infof("API: Endpoint Hit: %s %s%s", r.Method, r.Host, r.URL.Path)
+		handler(rw, r, ps)
+	}
+}
+
+func readJSON(requestBody io.ReadCloser, out any) error {
+	// TODO: prevent overflow (read by batches or set max size)
+	recordsJSON, err := io.ReadAll(requestBody)
+	if err != nil {
+		return err
+	}
+	defer requestBody.Close()
+
+	err = json.Unmarshal(recordsJSON, &out)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(out)
+
+	return err
+}
+
+func writeJSONResponse(w http.ResponseWriter, logger log.Logger, body any, statusCode int) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	err := json.NewEncoder(w).Encode(body)
+	if err != nil {
+		logger.Warnf("Failed to write JSON response: %s", err.Error())
+	}
+	// TODO: do not log private info
+	logger.Debugf("Response written: %+v", body)
 }
