@@ -8,8 +8,11 @@ services:
       - "8080:10000"
     restart: always
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     container_name: password_manager
+    networks:
+      - db_network
 
   postgres:
     image: postgres
