@@ -61,7 +61,7 @@ func TestGetRecords(t *testing.T) {
 		tt: []*TableTest{
 			{
 				testName:           "Get all records",
-				handle:             NewAllRecordsHandler(ctx),
+				handle:             AllRecordsHandler(ctx),
 				httpMethod:         http.MethodGet,
 				httpPath:           "/records",
 				expectedHTTPStatus: http.StatusOK,
@@ -69,7 +69,7 @@ func TestGetRecords(t *testing.T) {
 			},
 			{
 				testName:   "Get record by id 1",
-				handle:     NewRecordByIDHandler(ctx),
+				handle:     RecordByIDHandler(ctx),
 				httpMethod: http.MethodGet,
 				httpPath:   "/records/0",
 				ps: httprouter.Params{
@@ -80,7 +80,7 @@ func TestGetRecords(t *testing.T) {
 			},
 			{
 				testName:   "Get record by id 5",
-				handle:     NewRecordByIDHandler(ctx),
+				handle:     RecordByIDHandler(ctx),
 				httpMethod: http.MethodGet,
 				httpPath:   "/records/5",
 				ps: httprouter.Params{
@@ -91,7 +91,7 @@ func TestGetRecords(t *testing.T) {
 			},
 			{
 				testName:   "Returns 404 on missing record",
-				handle:     NewRecordByIDHandler(ctx),
+				handle:     RecordByIDHandler(ctx),
 				httpMethod: http.MethodGet,
 				httpPath:   "/records/a",
 				ps: httprouter.Params{
@@ -129,11 +129,11 @@ func TestPostRecords(t *testing.T) {
 		tt: []*TableTest{
 			{
 				testName:           "Post record",
-				handle:             NewCreateRecordHandler(ctx),
+				handle:             CreateRecordHandler(ctx),
 				httpMethod:         http.MethodPost,
 				httpPath:           "/records/",
 				expectedHTTPStatus: http.StatusAccepted,
-				expectedBody:       "",    // workaround
+				expectedBody:       "", // workaround
 			}},
 	}
 	TableTestRunner(t, tests)
