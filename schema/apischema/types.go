@@ -1,5 +1,7 @@
 package apischema
 
+import "github.com/google/uuid"
+
 const (
 	InvalidJSONMessage   = "Invalid JSON"
 	InternalErrorMessage = "Oops, something went wrong"
@@ -8,7 +10,7 @@ const (
 // TODO: add validator
 // TODO: add uuid (request id)
 type Record struct {
-	ID       uint64 `json:"id"`
+	ID       uuid.UUID `json:"id"`
 	Name     string `json:"name"`
 	Login    string `json:"login"`
 	Password string `json:"password"`

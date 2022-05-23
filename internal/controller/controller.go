@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"github.com/google/uuid"
 	"github.com/okutsen/PasswordManager/internal/log"
 	"github.com/okutsen/PasswordManager/schema/dbschema"
 )
@@ -20,31 +21,31 @@ func (c *Controller) GetAllRecords() ([]*dbschema.Record, error) {
 	// queryResult := repo.GetAllRecords()
 	return []*dbschema.Record{
 		{
-			ID:       1,
+			ID:       uuid.New(),
 			Name:     "testName",
 			Login:    "testLogin",
 			Password: "testPassword",
 		},
 		{
-			ID:       2,
+			ID:       uuid.New(),
 			Name:     "testName",
 			Login:    "testLogin",
 			Password: "testPassword",
 		},
 		{
-			ID:       3,
+			ID:       uuid.New(),
 			Name:     "testName",
 			Login:    "testLogin",
 			Password: "testPassword",
 		},
 		{
-			ID:       4,
+			ID:       uuid.New(),
 			Name:     "testName",
 			Login:    "testLogin",
 			Password: "testPassword",
 		},
 		{
-			ID:       5,
+			ID:       uuid.New(),
 			Name:     "testName",
 			Login:    "testLogin",
 			Password: "testPassword",
@@ -52,7 +53,7 @@ func (c *Controller) GetAllRecords() ([]*dbschema.Record, error) {
 	}, nil
 }
 
-func (c *Controller) GetRecord(id uint64) (*dbschema.Record, error) {
+func (c *Controller) GetRecord(id uuid.UUID) (*dbschema.Record, error) {
 	// TODO: pass uuid
 	return &dbschema.Record{
 		ID:       id,
@@ -71,6 +72,6 @@ func (c *Controller) UpdateRecord(records *dbschema.Record) error {
 	return nil
 }
 // 200, 404
-func (c *Controller) DeleteRecord(ids uint64) error {
+func (c *Controller) DeleteRecord(id uuid.UUID) error {
 	return nil
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
 
 	"github.com/okutsen/PasswordManager/internal/log"
@@ -17,10 +18,10 @@ const (
 
 type Controller interface {
 	GetAllRecords() ([]*dbschema.Record, error)
-	GetRecord(uint64) (*dbschema.Record, error)
+	GetRecord(uuid.UUID) (*dbschema.Record, error)
 	CreateRecord(*dbschema.Record) error
 	UpdateRecord(*dbschema.Record) error
-	DeleteRecord(uint64) error
+	DeleteRecord(uuid.UUID) error
 }
 
 type API struct {
@@ -48,11 +49,11 @@ func (api *API) Start() error {
 	api.ctx.logger.Info("API started")
 	router := httprouter.New()
 
-	router.GET("/records", NewEndpointLoggerMiddleware(api.ctx, NewGetAllRecordsHandler(api.ctx)))
-	router.GET(fmt.Sprintf("/records/:%s", IDParamName), NewEndpointLoggerMiddleware(api.ctx, NewGetRecordHandler(api.ctx)))
-	router.POST("/records", NewEndpointLoggerMiddleware(api.ctx, NewCreateRecordHandler(api.ctx)))
-	router.PUT("/records", NewEndpointLoggerMiddleware(api.ctx, NewUpdateRecordHandler(api.ctx)))
-	router.DELETE(fmt.Sprintf("/records/:%s", IDParamName), NewEndpointLoggerMiddleware(api.ctx, NewDeleteRecordHandler(api.ctx)))
+	router.GET("/records", InitMiddleware(api.ctx, NewGetAllRecordsHandler(api.ctx)))
+	router.GET(fmt.Sprintf("/records/:%s", IDParamName), InitMiddleware(api.ctx, NewGetRecordHandler(api.ctx)))
+	router.POST("/records", InitMiddleware(api.ctx, NewCreateRecordHandler(api.ctx)))
+	router.PUT("/records", InitMiddleware(api.ctx, NewUpdateRecordHandler(api.ctx)))
+	router.DELETE(fmt.Sprintf("/records/:%s", IDParamName), InitMiddleware(api.ctx, NewDeleteRecordHandler(api.ctx)))
 
 	api.server = http.Server{Addr: api.config.Address(), Handler: router}
 
