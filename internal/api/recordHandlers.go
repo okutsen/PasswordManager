@@ -17,7 +17,7 @@ func AllRecordsHandler(apictx *APIContext) HandlerFunc {
 		logger = logger.WithFields(log.Fields{
 			"corID": rctx.corID,
 		})
-		records, err := apictx.recordsController.AllRecords()
+		records, err := apictx.controller.AllRecords()
 		if err != nil {
 			logger.Warnf("failed to get records: %v", err)
 			writeJSONResponse(w, logger,
@@ -46,7 +46,7 @@ func RecordByIDHandler(apictx *APIContext) HandlerFunc {
 			return
 		}
 
-		record, err := apictx.recordsController.Record(id)
+		record, err := apictx.controller.Record(id)
 		if err != nil {
 			logger.Warnf("failed to get record %s: %v", id, err)
 			writeJSONResponse(w, logger,
@@ -85,7 +85,7 @@ func CreateRecordHandler(apictx *APIContext) HandlerFunc {
 		}
 
 		// TODO: if exists return err (409 Conflict)
-		record, err := apictx.recordsController.CreateRecord(&recordAPI)
+		record, err := apictx.controller.CreateRecord(&recordAPI)
 		if err != nil {
 			logger.Warnf("failed to create record: %v", err)
 			writeJSONResponse(w, logger,
@@ -134,7 +134,7 @@ func UpdateRecordHandler(apictx *APIContext) HandlerFunc {
 			return
 		}
 
-		updatedRecord, err := apictx.recordsController.UpdateRecord(id, &recordAPI)
+		updatedRecord, err := apictx.controller.UpdateRecord(id, &recordAPI)
 		if err != nil {
 			logger.Warnf("failed to update record %d: %v", recordAPI.ID, err)
 			writeJSONResponse(w, logger,
@@ -163,7 +163,7 @@ func DeleteRecordHandler(apictx *APIContext) HandlerFunc {
 			return
 		}
 
-		_, err = apictx.recordsController.DeleteRecord(id)
+		_, err = apictx.controller.DeleteRecord(id)
 		if err != nil {
 			logger.Warnf("failed to delete record %d: %v", id, err)
 			writeJSONResponse(w, logger,

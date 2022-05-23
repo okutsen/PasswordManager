@@ -39,13 +39,11 @@ func main() {
 	}
 	logger.Info("DB is started")
 
-	usersRepo := repo.NewUsersRepo(db)
-	recordsRepo := repo.NewRecordsRepo(db)
+	repository := repo.NewRepo(db)
 
-	usersController := controller.NewUsers(logger, usersRepo)
-	recordsController := controller.NewRecords(logger, recordsRepo)
+	ctrl := controller.NewController(logger, repository)
 
-	serviceAPI := api.New(&api.Config{Port: cfg.API.Port}, recordsController, usersController, logger)
+	serviceAPI := api.New(&api.Config{Port: cfg.API.Port}, ctrl, logger)
 
 	go func() {
 		err = serviceAPI.Start()

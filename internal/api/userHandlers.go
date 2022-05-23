@@ -17,7 +17,7 @@ func AllUsersHandler(apictx *APIContext) HandlerFunc {
 		logger = logger.WithFields(log.Fields{
 			"corID": rctx.corID,
 		})
-		users, err := apictx.usersController.AllUsers()
+		users, err := apictx.controller.AllUsers()
 		if err != nil {
 			logger.Warnf("failed to get users: %v", err)
 			writeJSONResponse(w, logger,
@@ -46,7 +46,7 @@ func UserByIdHandler(apictx *APIContext) HandlerFunc {
 			return
 		}
 
-		user, err := apictx.usersController.User(id)
+		user, err := apictx.controller.User(id)
 		if err != nil {
 			logger.Warnf("failed to get user %s: %v", id, err)
 			writeJSONResponse(w, logger,
@@ -84,7 +84,7 @@ func CreateUserHandler(apictx *APIContext) HandlerFunc {
 		}
 
 		// TODO: if exists return err (409 Conflict)
-		user, err := apictx.usersController.CreateUser(&userAPI)
+		user, err := apictx.controller.CreateUser(&userAPI)
 		if err != nil {
 			logger.Warnf("failed to create user: %v", err)
 			writeJSONResponse(w, logger,
@@ -133,7 +133,7 @@ func UpdateUserHandler(apictx *APIContext) HandlerFunc {
 			return
 		}
 
-		updateUser, err := apictx.usersController.UpdateUser(id, &userAPI)
+		updateUser, err := apictx.controller.UpdateUser(id, &userAPI)
 		if err != nil {
 			logger.Warnf("failed to update user %d: %v", userAPI.ID, err)
 			writeJSONResponse(w, logger,
@@ -162,7 +162,7 @@ func DeleteUserHandler(apictx *APIContext) HandlerFunc {
 			return
 		}
 
-		user, err := apictx.usersController.DeleteUser(id)
+		user, err := apictx.controller.DeleteUser(id)
 		if err != nil {
 			logger.Warnf("failed to delete user %d: %v", id, err)
 			writeJSONResponse(w, logger,

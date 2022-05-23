@@ -17,15 +17,13 @@ const (
 	IDParamName = "id"
 )
 
-type RecordsController interface {
+type Controller interface {
 	AllRecords() ([]apischema.Record, error)
 	Record(id uuid.UUID) (*apischema.Record, error)
 	CreateRecord(record *apischema.Record) (*apischema.Record, error)
 	UpdateRecord(id uuid.UUID, record *apischema.Record) (*apischema.Record, error)
 	DeleteRecord(id uuid.UUID) (*apischema.Record, error)
-}
 
-type UsersController interface {
 	AllUsers() ([]apischema.User, error)
 	User(id uuid.UUID) (*apischema.User, error)
 	CreateUser(user *apischema.User) (*apischema.User, error)
@@ -51,20 +49,18 @@ type API struct {
 }
 
 type APIContext struct {
-	recordsController RecordsController
-	usersController   UsersController
-	logger            log.Logger
+	controller Controller
+	logger     log.Logger
 }
 
 type HandlerFunc func(rw http.ResponseWriter, r *http.Request, ctx *RequestContext)
 
-func New(config *Config, recordController RecordsController, userController UsersController, logger log.Logger) *API {
+func New(config *Config, controller Controller, logger log.Logger) *API {
 	return &API{
 		config: config,
 		ctx: &APIContext{
-			recordsController: recordController,
-			usersController:   userController,
-			logger:            logger.WithFields(log.Fields{"service": "API"}),
+			controller: controller,
+			logger:     logger.WithFields(log.Fields{"service": "API"}),
 		},
 	}
 }
