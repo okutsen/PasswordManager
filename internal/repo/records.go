@@ -3,6 +3,7 @@ package repo
 import (
 	"fmt"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm/clause"
 
 	"github.com/okutsen/PasswordManager/schema/dbschema"
@@ -28,6 +29,7 @@ func (r *Records) AllRecords() ([]dbschema.Record, error) {
 }
 
 func (r *Records) CreateRecord(record *dbschema.Record) (*dbschema.Record, error) {
+	record.ID = uuid.New()
 	result := r.repo.db.Create(record)
 	err := result.Error
 	if err != nil {
@@ -37,7 +39,7 @@ func (r *Records) CreateRecord(record *dbschema.Record) (*dbschema.Record, error
 	return record, err
 }
 
-func (r *Records) RecordByID(id uint64) (*dbschema.Record, error) {
+func (r *Records) RecordByID(id uuid.UUID) (*dbschema.Record, error) {
 	var record dbschema.Record
 	result := r.repo.db.First(&record, id)
 	err := result.Error
@@ -58,13 +60,13 @@ func (r *Records) UpdateRecord(record *dbschema.Record) (*dbschema.Record, error
 	return record, err
 }
 
-func (r *Records) DeleteRecord(id uint64) error {
+func (r *Records) DeleteRecord(id uuid.UUID) (*dbschema.Record, error) {
 	var record dbschema.Record
-	result := r.repo.db.Delete(&record, id)
+	result := r.repo.db.Model(&record).Clauses(clause.Returning{}).Delete(&record, id)
 	err := result.Error
 	if err != nil {
-		return fmt.Errorf("failed to remove record from db: %w", err)
+		return nil, fmt.Errorf("failed to remove record from db: %w", err)
 	}
 
-	return err
+	return &record, err
 }

@@ -4,22 +4,20 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"strconv"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/google/uuid"
 
 	"github.com/okutsen/PasswordManager/internal/log"
 	"github.com/okutsen/PasswordManager/schema/apischema"
 )
 
-const (
-	RecordCreatedMessage = "Record created"
-)
-
-func NewAllRecordsHandler(ctx *APIContext) httprouter.Handle {
-	logger := ctx.logger.WithFields(log.Fields{"handler": "GetAllRecords"})
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-		records, err := ctx.recordsController.AllRecords()
+func AllRecordsHandler(apictx *APIContext) HandlerFunc {
+	logger := apictx.logger.WithFields(log.Fields{"handler": "GetAllRecords"})
+	return func(w http.ResponseWriter, r *http.Request, rctx *RequestContext) {
+		logger = logger.WithFields(log.Fields{
+			"corID": rctx.corID,
+		})
+		records, err := apictx.recordsController.AllRecords()
 		if err != nil {
 			logger.Warnf("failed to get records: %v", err)
 			writeJSONResponse(w, logger,
@@ -31,21 +29,26 @@ func NewAllRecordsHandler(ctx *APIContext) httprouter.Handle {
 	}
 }
 
-func NewRecordByIDHandler(ctx *APIContext) httprouter.Handle {
-	logger := ctx.logger.WithFields(log.Fields{"handler": "GetRecord"})
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		idStr := ps.ByName(IDParamName)
-		id, err := strconv.ParseUint(idStr, 10, 64)
+func RecordByIDHandler(apictx *APIContext) HandlerFunc {
+	logger := apictx.logger.WithFields(log.Fields{
+		"handler": "GetRecord",
+	})
+	return func(w http.ResponseWriter, r *http.Request, rctx *RequestContext) {
+		logger := logger.WithFields(log.Fields{
+			"corID": rctx.corID,
+		})
+		idStr := rctx.ps.ByName(IDParamName)
+		id, err := uuid.Parse(idStr)
 		if err != nil {
 			logger.Warnf("failed to convert path parameter id %s: %v", idStr, err)
 			writeJSONResponse(w, logger,
-				apischema.Error{Message: apischema.InvalidJSONMessage}, http.StatusBadRequest)
+				apischema.Error{Message: apischema.InvalidIDParam}, http.StatusBadRequest)
 			return
 		}
 
-		record, err := ctx.recordsController.Record(id)
+		record, err := apictx.recordsController.Record(id)
 		if err != nil {
-			logger.Warnf("failed to get record %d: %v", id, err)
+			logger.Warnf("failed to get record %s: %v", id, err)
 			writeJSONResponse(w, logger,
 				apischema.Error{Message: apischema.InternalErrorMessage}, http.StatusInternalServerError)
 			return
@@ -55,9 +58,14 @@ func NewRecordByIDHandler(ctx *APIContext) httprouter.Handle {
 	}
 }
 
-func NewCreateRecordHandler(ctx *APIContext) httprouter.Handle {
-	logger := ctx.logger.WithFields(log.Fields{"handler": "CreateRecords"})
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func CreateRecordHandler(apictx *APIContext) HandlerFunc {
+	logger := apictx.logger.WithFields(log.Fields{
+		"handler": "CreateRecord",
+	})
+	return func(w http.ResponseWriter, r *http.Request, rctx *RequestContext) {
+		logger := logger.WithFields(log.Fields{
+			"corID": rctx.corID,
+		})
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			logger.Warnf("failed to read body: %v", err)
@@ -77,7 +85,7 @@ func NewCreateRecordHandler(ctx *APIContext) httprouter.Handle {
 		}
 
 		// TODO: if exists return err (409 Conflict)
-		record, err := ctx.recordsController.CreateRecord(&recordAPI)
+		record, err := apictx.recordsController.CreateRecord(&recordAPI)
 		if err != nil {
 			logger.Warnf("failed to create record: %v", err)
 			writeJSONResponse(w, logger,
@@ -89,16 +97,21 @@ func NewCreateRecordHandler(ctx *APIContext) httprouter.Handle {
 	}
 }
 
-func NewUpdateRecordHandler(ctx *APIContext) httprouter.Handle {
-	logger := ctx.logger.WithFields(log.Fields{"handler": "UpdateRecords"})
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func UpdateRecordHandler(apictx *APIContext) HandlerFunc {
+	logger := apictx.logger.WithFields(log.Fields{
+		"handler": "UpdateRecords",
+	})
+	return func(w http.ResponseWriter, r *http.Request, rctx *RequestContext) {
+		logger := logger.WithFields(log.Fields{
+			"corID": rctx.corID,
+		})
 
-		idStr := ps.ByName(IDParamName)
-		id, err := strconv.ParseUint(idStr, 10, 64)
+		idStr := rctx.ps.ByName(IDParamName)
+		id, err := uuid.Parse(idStr)
 		if err != nil {
 			logger.Warnf("failed to convert path parameter id %s: %v", idStr, err)
 			writeJSONResponse(w, logger,
-				apischema.Error{Message: apischema.InvalidJSONMessage}, http.StatusBadRequest)
+				apischema.Error{Message: apischema.InvalidIDParam}, http.StatusBadRequest)
 			return
 		}
 
@@ -121,7 +134,7 @@ func NewUpdateRecordHandler(ctx *APIContext) httprouter.Handle {
 			return
 		}
 
-		updatedRecord, err := ctx.recordsController.UpdateRecord(id, &recordAPI)
+		updatedRecord, err := apictx.recordsController.UpdateRecord(id, &recordAPI)
 		if err != nil {
 			logger.Warnf("failed to update record %d: %v", recordAPI.ID, err)
 			writeJSONResponse(w, logger,
@@ -133,19 +146,24 @@ func NewUpdateRecordHandler(ctx *APIContext) httprouter.Handle {
 	}
 }
 
-func NewDeleteRecordHandler(ctx *APIContext) httprouter.Handle {
-	logger := ctx.logger.WithFields(log.Fields{"handler": "DeleteRecord"})
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		idStr := ps.ByName(IDParamName)
-		id, err := strconv.ParseUint(idStr, 10, 64)
+func DeleteRecordHandler(apictx *APIContext) HandlerFunc {
+	logger := apictx.logger.WithFields(log.Fields{
+		"handler": "DeleteRecords",
+	})
+	return func(w http.ResponseWriter, r *http.Request, rctx *RequestContext) {
+		logger := logger.WithFields(log.Fields{
+			"corID": rctx.corID,
+		})
+		idStr := rctx.ps.ByName(IDParamName)
+		id, err := uuid.Parse(idStr)
 		if err != nil {
 			logger.Warnf("failed to convert path parameter id %s: %v", idStr, err)
 			writeJSONResponse(w, logger,
-				apischema.Error{Message: apischema.InvalidJSONMessage}, http.StatusBadRequest)
+				apischema.Error{Message: apischema.InvalidIDParam}, http.StatusBadRequest)
 			return
 		}
 
-		err = ctx.recordsController.DeleteRecord(id)
+		_, err = apictx.recordsController.DeleteRecord(id)
 		if err != nil {
 			logger.Warnf("failed to delete record %d: %v", id, err)
 			writeJSONResponse(w, logger,

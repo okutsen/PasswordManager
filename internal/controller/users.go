@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"github.com/google/uuid"
+
 	"github.com/okutsen/PasswordManager/internal/log"
 	"github.com/okutsen/PasswordManager/schema/apischema"
 	"github.com/okutsen/PasswordManager/schema/dbschema"
@@ -9,10 +11,10 @@ import (
 
 type UsersRepo interface {
 	AllUsers() ([]dbschema.User, error)
-	UserByID(id uint64) (*dbschema.User, error)
+	UserByID(id uuid.UUID) (*dbschema.User, error)
 	CreateUser(record *dbschema.User) (*dbschema.User, error)
 	UpdateUser(record *dbschema.User) (*dbschema.User, error)
-	DeleteUser(id uint64) error
+	DeleteUser(id uuid.UUID) (*dbschema.User, error)
 }
 
 type UsersController struct {
@@ -37,14 +39,14 @@ func (c *UsersController) AllUsers() ([]apischema.User, error) {
 	return usersAPI, err
 }
 
-func (c *UsersController) User(id uint64) (*apischema.User, error) {
+func (c *UsersController) User(id uuid.UUID) (*apischema.User, error) {
 	getUser, err := c.users.UserByID(id) // TODO: pass uuid
 	if err != nil {
 		return nil, err
 	}
 
-	recordAPI := schemabuilder.BuildAPIUserFromDBUser(getUser)
-	return &recordAPI, err
+	user := schemabuilder.BuildAPIUserFromDBUser(getUser)
+	return &user, err
 }
 
 // TODO: return specific errors to identify on api 404 Not found, 409 Conflict(if exists)
@@ -61,7 +63,7 @@ func (c *UsersController) CreateUser(user *apischema.User) (*apischema.User, err
 }
 
 // 200, 204(if no changes?), 404
-func (c *UsersController) UpdateUser(id uint64, user *apischema.User) (*apischema.User, error) {
+func (c *UsersController) UpdateUser(id uuid.UUID, user *apischema.User) (*apischema.User, error) {
 	dbUser := schemabuilder.BuildDBUserFromAPIUser(user)
 	dbUser.ID = id
 
@@ -75,6 +77,13 @@ func (c *UsersController) UpdateUser(id uint64, user *apischema.User) (*apischem
 }
 
 // 200, 404
-func (c *UsersController) DeleteUser(id uint64) error {
-	return c.users.DeleteUser(id)
+func (c *UsersController) DeleteUser(id uuid.UUID) (*apischema.User, error) {
+	dbUser, err := c.users.DeleteUser(id)
+	if err != nil {
+		return nil, err
+	}
+
+	user := schemabuilder.BuildAPIUserFromDBUser(dbUser)
+
+	return &user, err
 }

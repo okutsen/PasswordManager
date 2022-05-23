@@ -1,8 +1,10 @@
 package apischema
 
-import "time"
+import (
+	"time"
 
-import "github.com/google/uuid"
+	"github.com/google/uuid"
+)
 
 const (
 	InvalidIDParam       = "Invalid ID"
@@ -11,7 +13,7 @@ const (
 )
 
 type User struct {
-	ID        uint64    `json:"id"`
+	ID        uuid.UUID `json:"id"`
 	Name      string    `json:"name"`
 	Email     string    `json:"email"`
 	Login     string    `json:"login"`
@@ -24,7 +26,7 @@ type User struct {
 // TODO: add validator
 // TODO: add uuid (request id)
 type Record struct {
-	ID          uint64    `json:"id"`
+	ID          uuid.UUID `json:"id"`
 	Name        string    `json:"name"`
 	Login       string    `json:"login"`
 	Password    string    `json:"password"`

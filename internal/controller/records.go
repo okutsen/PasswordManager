@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"github.com/google/uuid"
+
 	"github.com/okutsen/PasswordManager/internal/log"
 	"github.com/okutsen/PasswordManager/schema/apischema"
 	"github.com/okutsen/PasswordManager/schema/dbschema"
@@ -9,10 +11,10 @@ import (
 
 type RecordsRepo interface {
 	AllRecords() ([]dbschema.Record, error)
-	RecordByID(id uint64) (*dbschema.Record, error)
+	RecordByID(id uuid.UUID) (*dbschema.Record, error)
 	CreateRecord(record *dbschema.Record) (*dbschema.Record, error)
 	UpdateRecord(record *dbschema.Record) (*dbschema.Record, error)
-	DeleteRecord(id uint64) error
+	DeleteRecord(id uuid.UUID) (*dbschema.Record, error)
 }
 
 type RecordsController struct {
@@ -37,7 +39,7 @@ func (c *RecordsController) AllRecords() ([]apischema.Record, error) {
 	return recordsAPI, err
 }
 
-func (c *RecordsController) Record(id uint64) (*apischema.Record, error) {
+func (c *RecordsController) Record(id uuid.UUID) (*apischema.Record, error) {
 	getRecord, err := c.records.RecordByID(id) // TODO: pass uuid
 	if err != nil {
 		return nil, err
@@ -60,7 +62,7 @@ func (c *RecordsController) CreateRecord(record *apischema.Record) (*apischema.R
 }
 
 // 200, 204(if no changes?), 404
-func (c *RecordsController) UpdateRecord(id uint64, record *apischema.Record) (*apischema.Record, error) {
+func (c *RecordsController) UpdateRecord(id uuid.UUID, record *apischema.Record) (*apischema.Record, error) {
 	dbRecord := schemabuilder.BuildDBRecordFromAPIRecord(record)
 	dbRecord.ID = id
 
@@ -74,6 +76,13 @@ func (c *RecordsController) UpdateRecord(id uint64, record *apischema.Record) (*
 }
 
 // 200, 404
-func (c *RecordsController) DeleteRecord(id uint64) error {
-	return c.records.DeleteRecord(id)
+func (c *RecordsController) DeleteRecord(id uuid.UUID) (*apischema.Record, error) {
+	dbRecord, err := c.records.DeleteRecord(id)
+	if err != nil {
+		return nil, err
+	}
+
+	record := schemabuilder.BuildAPIRecordFromDBRecord(dbRecord)
+
+	return &record, err
 }

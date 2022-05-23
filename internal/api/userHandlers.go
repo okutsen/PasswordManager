@@ -4,18 +4,20 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"strconv"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/google/uuid"
 
 	"github.com/okutsen/PasswordManager/internal/log"
 	"github.com/okutsen/PasswordManager/schema/apischema"
 )
 
-func AllUsersHandler(ctx *APIContext) httprouter.Handle {
-	logger := ctx.logger.WithFields(log.Fields{"handler": "GetAllUsers"})
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-		records, err := ctx.usersController.AllUsers()
+func AllUsersHandler(apictx *APIContext) HandlerFunc {
+	logger := apictx.logger.WithFields(log.Fields{"handler": "GetAllUsers"})
+	return func(w http.ResponseWriter, r *http.Request, rctx *RequestContext) {
+		logger = logger.WithFields(log.Fields{
+			"corID": rctx.corID,
+		})
+		users, err := apictx.usersController.AllUsers()
 		if err != nil {
 			logger.Warnf("failed to get users: %v", err)
 			writeJSONResponse(w, logger,
@@ -23,15 +25,20 @@ func AllUsersHandler(ctx *APIContext) httprouter.Handle {
 			return
 		}
 
-		writeJSONResponse(w, logger, records, http.StatusOK)
+		writeJSONResponse(w, logger, users, http.StatusOK)
 	}
 }
 
-func UserByIdHandler(ctx *APIContext) httprouter.Handle {
-	logger := ctx.logger.WithFields(log.Fields{"handler": "GetUserByID"})
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		idStr := ps.ByName(IDParamName)
-		id, err := strconv.ParseUint(idStr, 10, 64)
+func UserByIdHandler(apictx *APIContext) HandlerFunc {
+	logger := apictx.logger.WithFields(log.Fields{
+		"handler": "GetUser",
+	})
+	return func(w http.ResponseWriter, r *http.Request, rctx *RequestContext) {
+		logger := logger.WithFields(log.Fields{
+			"corID": rctx.corID,
+		})
+		idStr := rctx.ps.ByName(IDParamName)
+		id, err := uuid.Parse(idStr)
 		if err != nil {
 			logger.Warnf("failed to convert path parameter id %s: %v", idStr, err)
 			writeJSONResponse(w, logger,
@@ -39,9 +46,9 @@ func UserByIdHandler(ctx *APIContext) httprouter.Handle {
 			return
 		}
 
-		user, err := ctx.usersController.User(id)
+		user, err := apictx.usersController.User(id)
 		if err != nil {
-			logger.Warnf("failed to get user %d: %v", id, err)
+			logger.Warnf("failed to get user %s: %v", id, err)
 			writeJSONResponse(w, logger,
 				apischema.Error{Message: apischema.InternalErrorMessage}, http.StatusInternalServerError)
 			return
@@ -50,10 +57,14 @@ func UserByIdHandler(ctx *APIContext) httprouter.Handle {
 		writeJSONResponse(w, logger, user, http.StatusOK)
 	}
 }
-
-func CreateUserHandler(ctx *APIContext) httprouter.Handle {
-	logger := ctx.logger.WithFields(log.Fields{"handler": "CreateRecords"})
-	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func CreateUserHandler(apictx *APIContext) HandlerFunc {
+	logger := apictx.logger.WithFields(log.Fields{
+		"handler": "CreateUser",
+	})
+	return func(w http.ResponseWriter, r *http.Request, rctx *RequestContext) {
+		logger := logger.WithFields(log.Fields{
+			"corID": rctx.corID,
+		})
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			logger.Warnf("failed to read body: %v", err)
@@ -63,8 +74,8 @@ func CreateUserHandler(ctx *APIContext) httprouter.Handle {
 		}
 		defer r.Body.Close()
 
-		var user apischema.User
-		err = json.Unmarshal(body, &user)
+		var userAPI apischema.User
+		err = json.Unmarshal(body, &userAPI)
 		if err != nil {
 			logger.Warnf("failed to unmarshal: %v", err)
 			writeJSONResponse(w, logger,
@@ -73,7 +84,7 @@ func CreateUserHandler(ctx *APIContext) httprouter.Handle {
 		}
 
 		// TODO: if exists return err (409 Conflict)
-		createdUser, err := ctx.usersController.CreateUser(&user)
+		user, err := apictx.usersController.CreateUser(&userAPI)
 		if err != nil {
 			logger.Warnf("failed to create user: %v", err)
 			writeJSONResponse(w, logger,
@@ -81,16 +92,21 @@ func CreateUserHandler(ctx *APIContext) httprouter.Handle {
 			return
 		}
 
-		writeJSONResponse(w, logger, createdUser, http.StatusAccepted)
+		writeJSONResponse(w, logger, user, http.StatusAccepted)
 	}
 }
 
-func UpdateUserHandler(ctx *APIContext) httprouter.Handle {
-	logger := ctx.logger.WithFields(log.Fields{"handler": "UpdateRecords"})
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func UpdateUserHandler(apictx *APIContext) HandlerFunc {
+	logger := apictx.logger.WithFields(log.Fields{
+		"handler": "UpdateUser",
+	})
+	return func(w http.ResponseWriter, r *http.Request, rctx *RequestContext) {
+		logger := logger.WithFields(log.Fields{
+			"corID": rctx.corID,
+		})
 
-		idStr := ps.ByName(IDParamName)
-		id, err := strconv.ParseUint(idStr, 10, 64)
+		idStr := rctx.ps.ByName(IDParamName)
+		id, err := uuid.Parse(idStr)
 		if err != nil {
 			logger.Warnf("failed to convert path parameter id %s: %v", idStr, err)
 			writeJSONResponse(w, logger,
@@ -98,7 +114,8 @@ func UpdateUserHandler(ctx *APIContext) httprouter.Handle {
 			return
 		}
 
-		var user apischema.User
+		var userAPI apischema.User
+
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			logger.Warnf("failed to read body: %v", err)
@@ -108,7 +125,7 @@ func UpdateUserHandler(ctx *APIContext) httprouter.Handle {
 		}
 		defer r.Body.Close()
 
-		err = json.Unmarshal(body, &user)
+		err = json.Unmarshal(body, &userAPI)
 		if err != nil {
 			logger.Warnf("failed to unmarshal: %v", err)
 			writeJSONResponse(w, logger,
@@ -116,31 +133,36 @@ func UpdateUserHandler(ctx *APIContext) httprouter.Handle {
 			return
 		}
 
-		updatedUser, err := ctx.usersController.UpdateUser(id, &user)
+		updateUser, err := apictx.usersController.UpdateUser(id, &userAPI)
 		if err != nil {
-			logger.Warnf("failed to update user %d: %v", user.ID, err)
+			logger.Warnf("failed to update user %d: %v", userAPI.ID, err)
 			writeJSONResponse(w, logger,
 				apischema.Error{Message: apischema.InternalErrorMessage}, http.StatusInternalServerError)
 			return
 		}
 
-		writeJSONResponse(w, logger, updatedUser, http.StatusAccepted)
+		writeJSONResponse(w, logger, updateUser, http.StatusAccepted)
 	}
 }
 
-func DeleteUserHandler(ctx *APIContext) httprouter.Handle {
-	logger := ctx.logger.WithFields(log.Fields{"handler": "DeleteUser"})
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		idStr := ps.ByName(IDParamName)
-		id, err := strconv.ParseUint(idStr, 10, 64)
+func DeleteUserHandler(apictx *APIContext) HandlerFunc {
+	logger := apictx.logger.WithFields(log.Fields{
+		"handler": "DeleteUser",
+	})
+	return func(w http.ResponseWriter, r *http.Request, rctx *RequestContext) {
+		logger := logger.WithFields(log.Fields{
+			"corID": rctx.corID,
+		})
+		idStr := rctx.ps.ByName(IDParamName)
+		id, err := uuid.Parse(idStr)
 		if err != nil {
 			logger.Warnf("failed to convert path parameter id %s: %v", idStr, err)
 			writeJSONResponse(w, logger,
-				apischema.Error{Message: apischema.InvalidJSONMessage}, http.StatusBadRequest)
+				apischema.Error{Message: apischema.InvalidIDParam}, http.StatusBadRequest)
 			return
 		}
 
-		err = ctx.usersController.DeleteUser(id)
+		user, err := apictx.usersController.DeleteUser(id)
 		if err != nil {
 			logger.Warnf("failed to delete user %d: %v", id, err)
 			writeJSONResponse(w, logger,
@@ -148,6 +170,6 @@ func DeleteUserHandler(ctx *APIContext) httprouter.Handle {
 			return
 		}
 
-		w.WriteHeader(http.StatusOK)
+		writeJSONResponse(w, logger, user, http.StatusOK)
 	}
 }

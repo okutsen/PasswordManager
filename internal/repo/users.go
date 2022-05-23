@@ -3,6 +3,7 @@ package repo
 import (
 	"fmt"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm/clause"
 
 	"github.com/okutsen/PasswordManager/schema/dbschema"
@@ -28,6 +29,7 @@ func (r *Users) AllUsers() ([]dbschema.User, error) {
 }
 
 func (r *Users) CreateUser(user *dbschema.User) (*dbschema.User, error) {
+	user.ID = uuid.New()
 	result := r.repo.db.Create(user)
 	err := result.Error
 	if err != nil {
@@ -37,7 +39,7 @@ func (r *Users) CreateUser(user *dbschema.User) (*dbschema.User, error) {
 	return user, err
 }
 
-func (r *Users) UserByID(id uint64) (*dbschema.User, error) {
+func (r *Users) UserByID(id uuid.UUID) (*dbschema.User, error) {
 	var user dbschema.User
 	result := r.repo.db.First(&user, id)
 	err := result.Error
@@ -58,13 +60,12 @@ func (r *Users) UpdateUser(user *dbschema.User) (*dbschema.User, error) {
 	return user, err
 }
 
-func (r *Users) DeleteUser(id uint64) error {
+func (r *Users) DeleteUser(id uuid.UUID) (*dbschema.User, error) {
 	var user dbschema.User
-	result := r.repo.db.Delete(&user, id)
+	result := r.repo.db.Model(&user).Clauses(clause.Returning{}).Delete(&user, id)
 	err := result.Error
 	if err != nil {
-		return fmt.Errorf("failed to remove user from db: %w", err)
+		return nil, fmt.Errorf("failed to remove user from db: %w", err)
 	}
-
-	return err
+	return &user, err
 }
