@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS records
 (
-    id SERIAL primary key,
+    id uuid primary key,
     name text not null,
     login text not null,
     password text not null,
