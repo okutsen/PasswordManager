@@ -8,11 +8,11 @@ import (
 )
 
 type UsersRepo interface {
-	AllUsersFromDB() ([]dbschema.User, error)
-	UserFromDB(id uint64) (*dbschema.User, error)
-	CreateUserInDB(record *dbschema.User) (*dbschema.User, error)
-	UpdateUserInDB(record *dbschema.User) (*dbschema.User, error)
-	DeleteUserFromDB(id uint64) error
+	AllUsers() ([]dbschema.User, error)
+	UserByID(id uint64) (*dbschema.User, error)
+	CreateUser(record *dbschema.User) (*dbschema.User, error)
+	UpdateUser(record *dbschema.User) (*dbschema.User, error)
+	DeleteUser(id uint64) error
 }
 
 type UsersController struct {
@@ -28,7 +28,7 @@ func NewUsers(logger log.Logger, repo UsersRepo) *UsersController {
 }
 
 func (c *UsersController) AllUsers() ([]apischema.User, error) {
-	getUsers, err := c.users.AllUsersFromDB()
+	getUsers, err := c.users.AllUsers()
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +38,7 @@ func (c *UsersController) AllUsers() ([]apischema.User, error) {
 }
 
 func (c *UsersController) User(id uint64) (*apischema.User, error) {
-	getUser, err := c.users.UserFromDB(id) // TODO: pass uuid
+	getUser, err := c.users.UserByID(id) // TODO: pass uuid
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +51,7 @@ func (c *UsersController) User(id uint64) (*apischema.User, error) {
 
 func (c *UsersController) CreateUser(user *apischema.User) (*apischema.User, error) {
 	dbUser := schemabuilder.BuildDBUserFromAPIUser(user)
-	createdDBUser, err := c.users.CreateUserInDB(&dbUser)
+	createdDBUser, err := c.users.CreateUser(&dbUser)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +65,7 @@ func (c *UsersController) UpdateUser(id uint64, user *apischema.User) (*apischem
 	dbUser := schemabuilder.BuildDBUserFromAPIUser(user)
 	dbUser.ID = id
 
-	updatedUser, err := c.users.UpdateUserInDB(&dbUser)
+	updatedUser, err := c.users.UpdateUser(&dbUser)
 	if err != nil {
 		return nil, err
 	}
@@ -76,5 +76,5 @@ func (c *UsersController) UpdateUser(id uint64, user *apischema.User) (*apischem
 
 // 200, 404
 func (c *UsersController) DeleteUser(id uint64) error {
-	return c.users.DeleteUserFromDB(id)
+	return c.users.DeleteUser(id)
 }

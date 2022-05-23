@@ -16,7 +16,7 @@ func NewUsersRepo(repo *Repo) *Users {
 	return &Users{repo: repo}
 }
 
-func (r *Users) AllUsersFromDB() ([]dbschema.User, error) {
+func (r *Users) AllUsers() ([]dbschema.User, error) {
 	var user []dbschema.User
 	result := r.repo.db.Find(&user)
 	err := result.Error
@@ -27,7 +27,7 @@ func (r *Users) AllUsersFromDB() ([]dbschema.User, error) {
 	return user, err
 }
 
-func (r *Users) CreateUserInDB(user *dbschema.User) (*dbschema.User, error) {
+func (r *Users) CreateUser(user *dbschema.User) (*dbschema.User, error) {
 	result := r.repo.db.Create(user)
 	err := result.Error
 	if err != nil {
@@ -37,7 +37,7 @@ func (r *Users) CreateUserInDB(user *dbschema.User) (*dbschema.User, error) {
 	return user, err
 }
 
-func (r *Users) UserFromDB(id uint64) (*dbschema.User, error) {
+func (r *Users) UserByID(id uint64) (*dbschema.User, error) {
 	var user dbschema.User
 	result := r.repo.db.First(&user, id)
 	err := result.Error
@@ -48,7 +48,7 @@ func (r *Users) UserFromDB(id uint64) (*dbschema.User, error) {
 	return &user, err
 }
 
-func (r *Users) UpdateUserInDB(user *dbschema.User) (*dbschema.User, error) {
+func (r *Users) UpdateUser(user *dbschema.User) (*dbschema.User, error) {
 	result := r.repo.db.Model(user).Clauses(clause.Returning{}).Updates(user)
 	err := result.Error
 	if err != nil {
@@ -58,7 +58,7 @@ func (r *Users) UpdateUserInDB(user *dbschema.User) (*dbschema.User, error) {
 	return user, err
 }
 
-func (r *Users) DeleteUserFromDB(id uint64) error {
+func (r *Users) DeleteUser(id uint64) error {
 	var user dbschema.User
 	result := r.repo.db.Delete(&user, id)
 	err := result.Error

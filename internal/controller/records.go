@@ -8,11 +8,11 @@ import (
 )
 
 type RecordsRepo interface {
-	AllRecordsFromDB() ([]dbschema.Record, error)
-	RecordByIDFromDB(id uint64) (*dbschema.Record, error)
-	CreateRecordInDB(record *dbschema.Record) (*dbschema.Record, error)
-	UpdateRecordInDB(record *dbschema.Record) (*dbschema.Record, error)
-	DeleteRecordFromDB(id uint64) error
+	AllRecords() ([]dbschema.Record, error)
+	RecordByID(id uint64) (*dbschema.Record, error)
+	CreateRecord(record *dbschema.Record) (*dbschema.Record, error)
+	UpdateRecord(record *dbschema.Record) (*dbschema.Record, error)
+	DeleteRecord(id uint64) error
 }
 
 type RecordsController struct {
@@ -28,7 +28,7 @@ func NewRecords(logger log.Logger, repo RecordsRepo) *RecordsController {
 }
 
 func (c *RecordsController) AllRecords() ([]apischema.Record, error) {
-	getRecords, err := c.records.AllRecordsFromDB()
+	getRecords, err := c.records.AllRecords()
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +38,7 @@ func (c *RecordsController) AllRecords() ([]apischema.Record, error) {
 }
 
 func (c *RecordsController) Record(id uint64) (*apischema.Record, error) {
-	getRecord, err := c.records.RecordByIDFromDB(id) // TODO: pass uuid
+	getRecord, err := c.records.RecordByID(id) // TODO: pass uuid
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func (c *RecordsController) Record(id uint64) (*apischema.Record, error) {
 // TODO: return specific errors to identify on api 404 Not found, 409 Conflict(if exists)
 func (c *RecordsController) CreateRecord(record *apischema.Record) (*apischema.Record, error) {
 	dbRecord := schemabuilder.BuildDBRecordFromAPIRecord(record)
-	createdDBRecord, err := c.records.CreateRecordInDB(&dbRecord)
+	createdDBRecord, err := c.records.CreateRecord(&dbRecord)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func (c *RecordsController) UpdateRecord(id uint64, record *apischema.Record) (*
 	dbRecord := schemabuilder.BuildDBRecordFromAPIRecord(record)
 	dbRecord.ID = id
 
-	updatedRecord, err := c.records.UpdateRecordInDB(&dbRecord)
+	updatedRecord, err := c.records.UpdateRecord(&dbRecord)
 	if err != nil {
 		return nil, err
 	}
@@ -75,5 +75,5 @@ func (c *RecordsController) UpdateRecord(id uint64, record *apischema.Record) (*
 
 // 200, 404
 func (c *RecordsController) DeleteRecord(id uint64) error {
-	return c.records.DeleteRecordFromDB(id)
+	return c.records.DeleteRecord(id)
 }
