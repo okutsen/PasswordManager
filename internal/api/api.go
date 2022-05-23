@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
 
 	"github.com/okutsen/PasswordManager/internal/log"
@@ -19,18 +20,18 @@ const (
 
 type RecordsController interface {
 	AllRecords() ([]apischema.Record, error)
-	Record(id uint64) (*apischema.Record, error)
+	Record(id uuid.UUID) (*apischema.Record, error)
 	CreateRecord(record *apischema.Record) (*apischema.Record, error)
-	UpdateRecord(id uint64, record *apischema.Record) (*apischema.Record, error)
-	DeleteRecord(id uint64) error
+	UpdateRecord(id uuid.UUID, record *apischema.Record) (*apischema.Record, error)
+	DeleteRecord(id uuid.UUID) error
 }
 
 type UsersController interface {
 	AllUsers() ([]apischema.User, error)
-	User(id uint64) (*apischema.User, error)
+	User(id uuid.UUID) (*apischema.User, error)
 	CreateUser(user *apischema.User) (*apischema.User, error)
-	UpdateUser(id uint64, user *apischema.User) (*apischema.User, error)
-	DeleteUser(id uint64) error
+	UpdateUser(id uuid.UUID, user *apischema.User) (*apischema.User, error)
+	DeleteUser(id uuid.UUID) error
 }
 
 type API struct {

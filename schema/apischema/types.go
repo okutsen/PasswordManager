@@ -2,6 +2,8 @@ package apischema
 
 import "time"
 
+import "github.com/google/uuid"
+
 const (
 	InvalidIDParam       = "Invalid ID"
 	InvalidJSONMessage   = "Invalid JSON"

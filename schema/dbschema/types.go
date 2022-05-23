@@ -5,7 +5,7 @@ import (
 )
 
 type User struct {
-	ID        uint64
+	ID        uuid.UUID
 	Name      string
 	Email     string
 	Login     string
@@ -16,7 +16,7 @@ type User struct {
 }
 
 type Record struct {
-	ID          uint64
+	ID          uuid.UUID
 	Name        string
 	Login       string
 	Password    string
