@@ -23,8 +23,19 @@ func NewOpenAPIv3(cfg *Config) *openapi3.T {
 			},
 		},
 	}
+	spec.Components.Schemas = openapi3.Schemas{
+		"Record": openapi3.NewSchemaRef("",
+			openapi3.NewObjectSchema().
+				WithProperty("id", openapi3.NewUUIDSchema()).
+				WithProperty("name", openapi3.NewStringSchema()).
+				WithProperty("login", openapi3.NewStringSchema()).
+				WithProperty("password", openapi3.NewStringSchema())),
+		"Error": openapi3.NewSchemaRef("",
+			openapi3.NewObjectSchema().
+				WithProperty("message", openapi3.NewStringSchema())),
+		// User
+	}
 	// TODO:
-	// spec.Components.Schemas
 	// spec.Components.RequestBodies
 	// spec.Components.Responses
 	// spec.Paths
