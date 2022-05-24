@@ -17,11 +17,10 @@ import (
 // TODO: password tips or reset questions
 
 func main() {
-	logger := log.NewLogrusLogger()
+	var logger log.Logger = log.NewLogrusLogger()
 	cfg, err := config.NewConfig()
 	if err != nil {
-		logger.Errorf("failed to initialize config: %v", err)
-		os.Exit(1)
+		logger.Fatalf("Failed to initialize config: %v", err)
 	}
 
 	ctrl := controller.New(logger)
@@ -31,7 +30,7 @@ func main() {
 	go func() {
 		err = serviceAPI.Start()
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			logger.Errorf("failed to start application %v", err)
+			logger.Errorf("Failed to start application %v", err)
 			return
 		}
 	}()
@@ -40,15 +39,14 @@ func main() {
 	signal.Notify(osSignals, syscall.SIGINT, syscall.SIGTERM)
 
 	osCall := <-osSignals
-	logger.Infof("system call: %v", osCall)
+	logger.Debugf("System call: %v", osCall)
 
 	ctx, cancel := context.WithTimeout(context.Background(), cfg.APIShutdownTimeout)
 	defer cancel()
 
 	err = serviceAPI.Stop(ctx)
 	if err != nil {
-		logger.Errorf("failed to stop application %v", err)
-		os.Exit(1)
+		logger.Fatalf("Failed to stop application %v", err)
 	}
 
 }

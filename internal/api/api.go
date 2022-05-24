@@ -61,6 +61,6 @@ func (api *API) Start() error {
 }
 
 func (api *API) Stop(ctx context.Context) error {
-	api.ctx.logger.Infof("shutting down server")
+	api.ctx.logger.Infof("Shutting down server")
 	return api.server.Shutdown(ctx)
 }
