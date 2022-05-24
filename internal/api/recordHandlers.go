@@ -9,6 +9,7 @@ import (
 
 	"github.com/okutsen/PasswordManager/internal/log"
 	"github.com/okutsen/PasswordManager/schema/apischema"
+	"github.com/okutsen/PasswordManager/schema/schemabuilder"
 )
 
 func AllRecordsHandler(apictx *APIContext) HandlerFunc {
@@ -17,15 +18,16 @@ func AllRecordsHandler(apictx *APIContext) HandlerFunc {
 		logger = logger.WithFields(log.Fields{
 			"corID": rctx.corID,
 		})
-		records, err := apictx.controller.AllRecords()
+		controllerRecords, err := apictx.controller.AllRecords()
 		if err != nil {
 			logger.Warnf("failed to get records: %v", err)
 			writeJSONResponse(w, logger,
 				apischema.Error{Message: apischema.InternalErrorMessage}, http.StatusInternalServerError)
 			return
 		}
+		APIRecord := schemabuilder.BuildAPIRecordsFromControllerRecords(controllerRecords)
 
-		writeJSONResponse(w, logger, records, http.StatusOK)
+		writeJSONResponse(w, logger, APIRecord, http.StatusOK)
 	}
 }
 
@@ -46,15 +48,16 @@ func RecordByIDHandler(apictx *APIContext) HandlerFunc {
 			return
 		}
 
-		record, err := apictx.controller.Record(id)
+		controllerRecord, err := apictx.controller.Record(id)
 		if err != nil {
 			logger.Warnf("failed to get record %s: %v", id, err)
 			writeJSONResponse(w, logger,
 				apischema.Error{Message: apischema.InternalErrorMessage}, http.StatusInternalServerError)
 			return
 		}
+		APIRecord := schemabuilder.BuildAPIRecordFromControllerRecord(controllerRecord)
 
-		writeJSONResponse(w, logger, record, http.StatusOK)
+		writeJSONResponse(w, logger, APIRecord, http.StatusOK)
 	}
 }
 
@@ -75,17 +78,17 @@ func CreateRecordHandler(apictx *APIContext) HandlerFunc {
 		}
 		defer r.Body.Close()
 
-		var recordAPI apischema.Record
-		err = json.Unmarshal(body, &recordAPI)
+		var apiRecord apischema.Record
+		err = json.Unmarshal(body, &apiRecord)
 		if err != nil {
 			logger.Warnf("failed to unmarshal: %v", err)
 			writeJSONResponse(w, logger,
 				apischema.Error{Message: apischema.InvalidJSONMessage}, http.StatusBadRequest)
 			return
 		}
-
+		controllerRecord := schemabuilder.BuildControllerRecordFromAPIRecord(&apiRecord)
 		// TODO: if exists return err (409 Conflict)
-		record, err := apictx.controller.CreateRecord(&recordAPI)
+		createRecord, err := apictx.controller.CreateRecord(&controllerRecord)
 		if err != nil {
 			logger.Warnf("failed to create record: %v", err)
 			writeJSONResponse(w, logger,
@@ -93,7 +96,8 @@ func CreateRecordHandler(apictx *APIContext) HandlerFunc {
 			return
 		}
 
-		writeJSONResponse(w, logger, record, http.StatusAccepted)
+		apiRecord = schemabuilder.BuildAPIRecordFromControllerRecord(createRecord)
+		writeJSONResponse(w, logger, apiRecord, http.StatusAccepted)
 	}
 }
 
@@ -134,7 +138,8 @@ func UpdateRecordHandler(apictx *APIContext) HandlerFunc {
 			return
 		}
 
-		updatedRecord, err := apictx.controller.UpdateRecord(id, &recordAPI)
+		controllerRecord := schemabuilder.BuildControllerRecordFromAPIRecord(&recordAPI)
+		updatedRecord, err := apictx.controller.UpdateRecord(id, &controllerRecord)
 		if err != nil {
 			logger.Warnf("failed to update record %d: %v", recordAPI.ID, err)
 			writeJSONResponse(w, logger,
@@ -142,13 +147,15 @@ func UpdateRecordHandler(apictx *APIContext) HandlerFunc {
 			return
 		}
 
-		writeJSONResponse(w, logger, updatedRecord, http.StatusAccepted)
+		record := schemabuilder.BuildAPIRecordFromControllerRecord(updatedRecord)
+
+		writeJSONResponse(w, logger, record, http.StatusAccepted)
 	}
 }
 
 func DeleteRecordHandler(apictx *APIContext) HandlerFunc {
 	logger := apictx.logger.WithFields(log.Fields{
-		"handler": "DeleteRecords",
+		"handler": "DeleteRecord",
 	})
 	return func(w http.ResponseWriter, r *http.Request, rctx *RequestContext) {
 		logger := logger.WithFields(log.Fields{
@@ -163,14 +170,15 @@ func DeleteRecordHandler(apictx *APIContext) HandlerFunc {
 			return
 		}
 
-		_, err = apictx.controller.DeleteRecord(id)
+		controllerRecord, err := apictx.controller.DeleteRecord(id)
 		if err != nil {
-			logger.Warnf("failed to delete record %d: %v", id, err)
+			logger.Warnf("failed to delete user %d: %v", id, err)
 			writeJSONResponse(w, logger,
 				apischema.Error{Message: apischema.InternalErrorMessage}, http.StatusInternalServerError)
 			return
 		}
+		record := schemabuilder.BuildAPIRecordFromControllerRecord(controllerRecord)
 
-		w.WriteHeader(http.StatusOK)
+		writeJSONResponse(w, logger, record, http.StatusOK)
 	}
 }

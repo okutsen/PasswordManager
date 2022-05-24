@@ -10,7 +10,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 
 	"github.com/okutsen/PasswordManager/internal/log"
-	"github.com/okutsen/PasswordManager/schema/apischema"
+	"github.com/okutsen/PasswordManager/schema/controllerSchema"
 )
 
 const (
@@ -18,17 +18,17 @@ const (
 )
 
 type Controller interface {
-	AllRecords() ([]apischema.Record, error)
-	Record(id uuid.UUID) (*apischema.Record, error)
-	CreateRecord(record *apischema.Record) (*apischema.Record, error)
-	UpdateRecord(id uuid.UUID, record *apischema.Record) (*apischema.Record, error)
-	DeleteRecord(id uuid.UUID) (*apischema.Record, error)
+	AllRecords() ([]controllerSchema.Record, error)
+	Record(id uuid.UUID) (*controllerSchema.Record, error)
+	CreateRecord(record *controllerSchema.Record) (*controllerSchema.Record, error)
+	UpdateRecord(id uuid.UUID, record *controllerSchema.Record) (*controllerSchema.Record, error)
+	DeleteRecord(id uuid.UUID) (*controllerSchema.Record, error)
 
-	AllUsers() ([]apischema.User, error)
-	User(id uuid.UUID) (*apischema.User, error)
-	CreateUser(user *apischema.User) (*apischema.User, error)
-	UpdateUser(id uuid.UUID, user *apischema.User) (*apischema.User, error)
-	DeleteUser(id uuid.UUID) (*apischema.User, error)
+	AllUsers() ([]controllerSchema.User, error)
+	User(id uuid.UUID) (*controllerSchema.User, error)
+	CreateUser(user *controllerSchema.User) (*controllerSchema.User, error)
+	UpdateUser(id uuid.UUID, user *controllerSchema.User) (*controllerSchema.User, error)
+	DeleteUser(id uuid.UUID) (*controllerSchema.User, error)
 }
 
 const (

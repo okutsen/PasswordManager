@@ -18,8 +18,8 @@ import (
 // TODO: password tips or reset questions
 
 func main() {
-	logger := log.NewLogrusLogger()
-	cfg, err := config.NewConfig()
+	logger := log.New()
+	cfg, err := config.New()
 	if err != nil {
 		logger.Errorf("failed to initialize config: %v", err)
 		os.Exit(1)
@@ -39,9 +39,7 @@ func main() {
 	}
 	logger.Info("DB is started")
 
-	repository := repo.NewRepo(db)
-
-	ctrl := controller.NewController(logger, repository)
+	ctrl := controller.New(logger, db)
 
 	serviceAPI := api.New(&api.Config{Port: cfg.API.Port}, ctrl, logger)
 

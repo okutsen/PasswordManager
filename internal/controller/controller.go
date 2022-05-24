@@ -4,7 +4,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/okutsen/PasswordManager/internal/log"
-	"github.com/okutsen/PasswordManager/schema/apischema"
+	"github.com/okutsen/PasswordManager/schema/controllerSchema"
 	"github.com/okutsen/PasswordManager/schema/dbschema"
 	"github.com/okutsen/PasswordManager/schema/schemabuilder"
 )
@@ -18,8 +18,8 @@ type Repository interface {
 
 	AllUsers() ([]dbschema.User, error)
 	UserByID(id uuid.UUID) (*dbschema.User, error)
-	CreateUser(record *dbschema.User) (*dbschema.User, error)
-	UpdateUser(record *dbschema.User) (*dbschema.User, error)
+	CreateUser(user *dbschema.User) (*dbschema.User, error)
+	UpdateUser(user *dbschema.User) (*dbschema.User, error)
 	DeleteUser(id uuid.UUID) (*dbschema.User, error)
 }
 
@@ -28,126 +28,126 @@ type Controller struct {
 	log  log.Logger
 }
 
-func NewController(logger log.Logger, ctrl Repository) *Controller {
+func New(logger log.Logger, ctrl Repository) *Controller {
 	return &Controller{
 		log:  logger.WithFields(log.Fields{"service": "Controller"}),
 		repo: ctrl,
 	}
 }
 
-func (c *Controller) AllRecords() ([]apischema.Record, error) {
-	getRecords, err := c.repo.AllRecords()
+func (c *Controller) AllRecords() ([]controllerSchema.Record, error) {
+	getDBRecords, err := c.repo.AllRecords()
 	if err != nil {
 		return nil, err
 	}
+	records := schemabuilder.BuildControllerRecordsFromDBRecords(getDBRecords)
 
-	recordsAPI := schemabuilder.BuildAPIRecordsFromDBRecords(getRecords)
-	return recordsAPI, err
+	return records, nil
 }
 
-func (c *Controller) Record(id uuid.UUID) (*apischema.Record, error) {
-	getRecord, err := c.repo.RecordByID(id) // TODO: pass uuid
+func (c *Controller) Record(id uuid.UUID) (*controllerSchema.Record, error) {
+	DBRecord, err := c.repo.RecordByID(id) // TODO: pass uuid
 	if err != nil {
 		return nil, err
 	}
 
-	recordAPI := schemabuilder.BuildAPIRecordFromDBRecord(getRecord)
-	return &recordAPI, err
+	record := schemabuilder.BuildControllerRecordFromDBRecord(DBRecord)
+	return &record, nil
 }
 
 // TODO: return specific errors to identify on api 404 Not found, 409 Conflict(if exists)
-func (c *Controller) CreateRecord(record *apischema.Record) (*apischema.Record, error) {
-	dbRecord := schemabuilder.BuildDBRecordFromAPIRecord(record)
-	createdDBRecord, err := c.repo.CreateRecord(&dbRecord)
+func (c *Controller) CreateRecord(record *controllerSchema.Record) (*controllerSchema.Record, error) {
+	dbRecord := schemabuilder.BuildDBRecordFromControllerRecord(record)
+	createRecord, err := c.repo.CreateRecord(&dbRecord)
 	if err != nil {
 		return nil, err
 	}
 
-	createdAPIRecord := schemabuilder.BuildAPIRecordFromDBRecord(createdDBRecord)
-	return &createdAPIRecord, err
+	createdRecord := schemabuilder.BuildControllerRecordFromDBRecord(createRecord)
+	return &createdRecord, nil
 }
 
 // 200, 204(if no changes?), 404
-func (c *Controller) UpdateRecord(id uuid.UUID, record *apischema.Record) (*apischema.Record, error) {
-	dbRecord := schemabuilder.BuildDBRecordFromAPIRecord(record)
+func (c *Controller) UpdateRecord(id uuid.UUID, record *controllerSchema.Record) (*controllerSchema.Record, error) {
+	dbRecord := schemabuilder.BuildDBRecordFromControllerRecord(record)
 	dbRecord.ID = id
 
-	updatedRecord, err := c.repo.UpdateRecord(&dbRecord)
+	updateRecord, err := c.repo.UpdateRecord(&dbRecord)
 	if err != nil {
 		return nil, err
 	}
 
-	updatedApiRecord := schemabuilder.BuildAPIRecordFromDBRecord(updatedRecord)
-	return &updatedApiRecord, err
+	updatedRecord := schemabuilder.BuildControllerRecordFromDBRecord(updateRecord)
+	return &updatedRecord, nil
 }
 
 // 200, 404
-func (c *Controller) DeleteRecord(id uuid.UUID) (*apischema.Record, error) {
+func (c *Controller) DeleteRecord(id uuid.UUID) (*controllerSchema.Record, error) {
 	dbRecord, err := c.repo.DeleteRecord(id)
 	if err != nil {
 		return nil, err
 	}
 
-	record := schemabuilder.BuildAPIRecordFromDBRecord(dbRecord)
+	record := schemabuilder.BuildControllerRecordFromDBRecord(dbRecord)
 
-	return &record, err
+	return &record, nil
 }
 
-func (c *Controller) AllUsers() ([]apischema.User, error) {
+func (c *Controller) AllUsers() ([]controllerSchema.User, error) {
 	getUsers, err := c.repo.AllUsers()
 	if err != nil {
 		return nil, err
 	}
 
-	usersAPI := schemabuilder.BuildAPIUsersFromDBUsers(getUsers)
-	return usersAPI, err
+	users := schemabuilder.BuildControllerUsersFromDBUsers(getUsers)
+	return users, nil
 }
 
-func (c *Controller) User(id uuid.UUID) (*apischema.User, error) {
+func (c *Controller) User(id uuid.UUID) (*controllerSchema.User, error) {
 	getUser, err := c.repo.UserByID(id) // TODO: pass uuid
 	if err != nil {
 		return nil, err
 	}
 
-	user := schemabuilder.BuildAPIUserFromDBUser(getUser)
-	return &user, err
+	user := schemabuilder.BuildControllerUserFromDBUser(getUser)
+	return &user, nil
 }
 
 // TODO: return specific errors to identify on api 404 Not found, 409 Conflict(if exists)
 
-func (c *Controller) CreateUser(user *apischema.User) (*apischema.User, error) {
-	dbUser := schemabuilder.BuildDBUserFromAPIUser(user)
+func (c *Controller) CreateUser(user *controllerSchema.User) (*controllerSchema.User, error) {
+	dbUser := schemabuilder.BuildDBUserFromControllerUser(user)
 	createdDBUser, err := c.repo.CreateUser(&dbUser)
 	if err != nil {
 		return nil, err
 	}
 
-	createAPIUser := schemabuilder.BuildAPIUserFromDBUser(createdDBUser)
-	return &createAPIUser, err
+	createdUser := schemabuilder.BuildControllerUserFromDBUser(createdDBUser)
+	return &createdUser, nil
 }
 
 // 200, 204(if no changes?), 404
-func (c *Controller) UpdateUser(id uuid.UUID, user *apischema.User) (*apischema.User, error) {
-	dbUser := schemabuilder.BuildDBUserFromAPIUser(user)
+func (c *Controller) UpdateUser(id uuid.UUID, user *controllerSchema.User) (*controllerSchema.User, error) {
+	dbUser := schemabuilder.BuildDBUserFromControllerUser(user)
 	dbUser.ID = id
 
-	updatedUser, err := c.repo.UpdateUser(&dbUser)
+	updateUser, err := c.repo.UpdateUser(&dbUser)
 	if err != nil {
 		return nil, err
 	}
 
-	updatedAPIUser := schemabuilder.BuildAPIUserFromDBUser(updatedUser)
-	return &updatedAPIUser, err
+	updatedUser := schemabuilder.BuildControllerUserFromDBUser(updateUser)
+	return &updatedUser, nil
 }
 
 // 200, 404
-func (c *Controller) DeleteUser(id uuid.UUID) (*apischema.User, error) {
+func (c *Controller) DeleteUser(id uuid.UUID) (*controllerSchema.User, error) {
 	dbUser, err := c.repo.DeleteUser(id)
 	if err != nil {
 		return nil, err
 	}
 
-	user := schemabuilder.BuildAPIUserFromDBUser(dbUser)
+	user := schemabuilder.BuildControllerUserFromDBUser(dbUser)
 
-	return &user, err
+	return &user, nil
 }

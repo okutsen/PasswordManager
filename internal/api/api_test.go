@@ -37,8 +37,8 @@ type TableTests struct {
 }
 
 func TestGetRecords(t *testing.T) {
-	logger := log.NewLogrusLogger()
-	cfg, err := config.NewConfig()
+	logger := log.New()
+	cfg, err := config.New()
 	if err != nil {
 		logger.Errorf("failed to initialize config: %v", err)
 		os.Exit(1)
@@ -105,8 +105,8 @@ func TestGetRecords(t *testing.T) {
 }
 
 func TestPostRecords(t *testing.T) {
-	logger := log.NewLogrusLogger()
-	cfg, err := config.NewConfig()
+	logger := log.New()
+	cfg, err := config.New()
 	if err != nil {
 		logger.Errorf("failed to initialize config: %v", err)
 		os.Exit(1)

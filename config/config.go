@@ -26,7 +26,7 @@ type DBConfig struct {
 	SSLMode  string `envConfig:"PM_DB_SSL_MODE" default:"disable"`
 }
 
-func NewConfig() (*Config, error) {
+func New() (*Config, error) {
 	var c Config
 	err := envconfig.Process("pm", &c)
 	if err != nil {

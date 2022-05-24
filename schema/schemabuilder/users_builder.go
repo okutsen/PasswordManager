@@ -2,10 +2,33 @@ package schemabuilder
 
 import (
 	"github.com/okutsen/PasswordManager/schema/apischema"
+	"github.com/okutsen/PasswordManager/schema/controllerSchema"
 	"github.com/okutsen/PasswordManager/schema/dbschema"
 )
 
-func BuildAPIUserFromDBUser(user *dbschema.User) apischema.User {
+func BuildControllerUserFromDBUser(user *dbschema.User) controllerSchema.User {
+	return controllerSchema.User{
+		ID:        user.ID,
+		Name:      user.Name,
+		Email:     user.Email,
+		Login:     user.Login,
+		Password:  user.Password,
+		Phone:     user.Phone,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+	}
+}
+
+func BuildControllerUsersFromDBUsers(users []dbschema.User) []controllerSchema.User {
+	usersController := make([]controllerSchema.User, len(users))
+	for i, v := range users {
+		usersController[i] = BuildControllerUserFromDBUser(&v)
+	}
+
+	return usersController
+}
+
+func BuildAPIUserFromControllerUser(user *controllerSchema.User) apischema.User {
 	return apischema.User{
 		ID:        user.ID,
 		Name:      user.Name,
@@ -18,16 +41,29 @@ func BuildAPIUserFromDBUser(user *dbschema.User) apischema.User {
 	}
 }
 
-func BuildAPIUsersFromDBUsers(users []dbschema.User) []apischema.User {
-	usersAPI := make([]apischema.User, len(users))
+func BuildAPIUsersFromControllerUsers(users []controllerSchema.User) []apischema.User {
+	usersController := make([]apischema.User, len(users))
 	for i, v := range users {
-		usersAPI[i] = BuildAPIUserFromDBUser(&v)
+		usersController[i] = BuildAPIUserFromControllerUser(&v)
 	}
 
-	return usersAPI
+	return usersController
 }
 
-func BuildDBUserFromAPIUser(user *apischema.User) dbschema.User {
+func BuildControllerUserFromAPIUser(user *apischema.User) controllerSchema.User {
+	return controllerSchema.User{
+		ID:        user.ID,
+		Name:      user.Name,
+		Email:     user.Email,
+		Login:     user.Login,
+		Password:  user.Password,
+		Phone:     user.Phone,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+	}
+}
+
+func BuildDBUserFromControllerUser(user *controllerSchema.User) dbschema.User {
 	return dbschema.User{
 		ID:        user.ID,
 		Name:      user.Name,

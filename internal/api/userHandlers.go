@@ -9,6 +9,7 @@ import (
 
 	"github.com/okutsen/PasswordManager/internal/log"
 	"github.com/okutsen/PasswordManager/schema/apischema"
+	"github.com/okutsen/PasswordManager/schema/schemabuilder"
 )
 
 func AllUsersHandler(apictx *APIContext) HandlerFunc {
@@ -46,13 +47,14 @@ func UserByIdHandler(apictx *APIContext) HandlerFunc {
 			return
 		}
 
-		user, err := apictx.controller.User(id)
+		controllerUser, err := apictx.controller.User(id)
 		if err != nil {
 			logger.Warnf("failed to get user %s: %v", id, err)
 			writeJSONResponse(w, logger,
 				apischema.Error{Message: apischema.InternalErrorMessage}, http.StatusInternalServerError)
 			return
 		}
+		user := schemabuilder.BuildAPIUserFromControllerUser(controllerUser)
 
 		writeJSONResponse(w, logger, user, http.StatusOK)
 	}
@@ -82,15 +84,17 @@ func CreateUserHandler(apictx *APIContext) HandlerFunc {
 				apischema.Error{Message: apischema.InvalidJSONMessage}, http.StatusBadRequest)
 			return
 		}
+		controllerUser := schemabuilder.BuildControllerUserFromAPIUser(&userAPI)
 
 		// TODO: if exists return err (409 Conflict)
-		user, err := apictx.controller.CreateUser(&userAPI)
+		createUser, err := apictx.controller.CreateUser(&controllerUser)
 		if err != nil {
 			logger.Warnf("failed to create user: %v", err)
 			writeJSONResponse(w, logger,
 				apischema.Error{Message: apischema.InternalErrorMessage}, http.StatusInternalServerError)
 			return
 		}
+		user := schemabuilder.BuildAPIUserFromControllerUser(createUser)
 
 		writeJSONResponse(w, logger, user, http.StatusAccepted)
 	}
@@ -132,16 +136,17 @@ func UpdateUserHandler(apictx *APIContext) HandlerFunc {
 				apischema.Error{Message: apischema.InvalidJSONMessage}, http.StatusBadRequest)
 			return
 		}
-
-		updateUser, err := apictx.controller.UpdateUser(id, &userAPI)
+		controllerUser := schemabuilder.BuildControllerUserFromAPIUser(&userAPI)
+		updateUser, err := apictx.controller.UpdateUser(id, &controllerUser)
 		if err != nil {
 			logger.Warnf("failed to update user %d: %v", userAPI.ID, err)
 			writeJSONResponse(w, logger,
 				apischema.Error{Message: apischema.InternalErrorMessage}, http.StatusInternalServerError)
 			return
 		}
+		user := schemabuilder.BuildAPIUserFromControllerUser(updateUser)
 
-		writeJSONResponse(w, logger, updateUser, http.StatusAccepted)
+		writeJSONResponse(w, logger, user, http.StatusAccepted)
 	}
 }
 
@@ -162,13 +167,14 @@ func DeleteUserHandler(apictx *APIContext) HandlerFunc {
 			return
 		}
 
-		user, err := apictx.controller.DeleteUser(id)
+		controllerUser, err := apictx.controller.DeleteUser(id)
 		if err != nil {
 			logger.Warnf("failed to delete user %d: %v", id, err)
 			writeJSONResponse(w, logger,
 				apischema.Error{Message: apischema.InternalErrorMessage}, http.StatusInternalServerError)
 			return
 		}
+		user := schemabuilder.BuildAPIUserFromControllerUser(controllerUser)
 
 		writeJSONResponse(w, logger, user, http.StatusOK)
 	}

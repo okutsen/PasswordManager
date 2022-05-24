@@ -3,7 +3,7 @@ package log
 import "github.com/sirupsen/logrus"
 
 // TODO: configure logrus
-func NewLogrusLogger() Logger {
+func New() Logger {
 	return &LogrusLogger{
 		logger: logrus.New(),
 	}
