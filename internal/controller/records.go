@@ -29,6 +29,7 @@ func NewRecords(logger log.Logger, repo RecordsRepo) *RecordsController {
 	}
 }
 
+// AllRecords get all records from DB
 func (c *RecordsController) AllRecords() ([]apischema.Record, error) {
 	getRecords, err := c.records.AllRecords()
 	if err != nil {
@@ -39,6 +40,7 @@ func (c *RecordsController) AllRecords() ([]apischema.Record, error) {
 	return recordsAPI, err
 }
 
+// Record get one record from DB by ID
 func (c *RecordsController) Record(id uuid.UUID) (*apischema.Record, error) {
 	getRecord, err := c.records.RecordByID(id) // TODO: pass uuid
 	if err != nil {
@@ -49,7 +51,7 @@ func (c *RecordsController) Record(id uuid.UUID) (*apischema.Record, error) {
 	return &recordAPI, err
 }
 
-// TODO: return specific errors to identify on api 404 Not found, 409 Conflict(if exists)
+// CreateRecord creates new record in DB
 func (c *RecordsController) CreateRecord(record *apischema.Record) (*apischema.Record, error) {
 	dbRecord := schemabuilder.BuildDBRecordFromAPIRecord(record)
 	createdDBRecord, err := c.records.CreateRecord(&dbRecord)
@@ -61,7 +63,7 @@ func (c *RecordsController) CreateRecord(record *apischema.Record) (*apischema.R
 	return &createdAPIRecord, err
 }
 
-// 200, 204(if no changes?), 404
+// UpdateRecord updates record in DB
 func (c *RecordsController) UpdateRecord(id uuid.UUID, record *apischema.Record) (*apischema.Record, error) {
 	dbRecord := schemabuilder.BuildDBRecordFromAPIRecord(record)
 	dbRecord.ID = id
@@ -75,7 +77,7 @@ func (c *RecordsController) UpdateRecord(id uuid.UUID, record *apischema.Record)
 	return &updatedApiRecord, err
 }
 
-// 200, 404
+// DeleteRecord deletes record in DB
 func (c *RecordsController) DeleteRecord(id uuid.UUID) (*apischema.Record, error) {
 	dbRecord, err := c.records.DeleteRecord(id)
 	if err != nil {
