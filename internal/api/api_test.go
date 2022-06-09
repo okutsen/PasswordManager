@@ -1,30 +1,48 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
-	"github.com/julienschmidt/httprouter"
-
+	"github.com/okutsen/PasswordManager/config"
 	"github.com/okutsen/PasswordManager/internal/controller"
 	"github.com/okutsen/PasswordManager/internal/log"
+	"github.com/okutsen/PasswordManager/schema/apischema"
 )
 
 const (
 	testSeparator string = "\n---------------------\n"
 )
 
+func initAPI() {
+	var logger log.Logger = log.NewLogrusLogger()
+	cfg, err := config.NewConfig()
+	if err != nil {
+		logger.Fatalf("Failed to initialize config: %v", err)
+	}
+	ctrl := controller.New(logger)
+	serviceAPI := New(&Config{Port: cfg.Port}, ctrl, logger)
+
+	go func() {
+		err = serviceAPI.Start()
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			logger.Errorf("Failed to start application %v", err)
+			return
+		}
+	}()
+}
+
 // TODO: update tests for json
 type TableTest struct {
 	// Create request for specified
 	testName           string
-	handle             httprouter.Handle
 	httpMethod         string
 	httpPath           string
-	ps                 httprouter.Params
 	expectedHTTPStatus int
-	expectedBody       string
+	expectedBody       interface{}
 }
 
 type TableTests struct {
@@ -32,65 +50,57 @@ type TableTests struct {
 }
 
 func TestGetRecords(t *testing.T) {
-	logger := log.NewLogrusLogger()
-	ctrl := controller.New(logger)
-	apictx := &APIContext{ctrl, logger}
 	tests := TableTests{
 		tt: []*TableTest{
 			{
 				testName:           "Get all records",
-				handle:             InitMiddleware(apictx, NewGetAllRecordsHandler(apictx)),
 				httpMethod:         http.MethodGet,
 				httpPath:           "/records",
 				expectedHTTPStatus: http.StatusOK,
-				expectedBody:       "Records:\n0,1,2,3,4,5",
+				// TODO: fill with test data
+				expectedBody:       &apischema.Record{
+
+				},
 			},
 			{
 				testName:   "Get record by id 1",
-				handle:     InitMiddleware(apictx, NewGetRecordHandler(apictx)),
 				httpMethod: http.MethodGet,
 				httpPath:   "/records/0",
-				ps: httprouter.Params{
-					httprouter.Param{Key: IDParamName, Value: "0"},
-				},
 				expectedHTTPStatus: http.StatusOK,
-				expectedBody:       "Records:\n0",
+				// TODO: fill with test data
+				expectedBody:       &apischema.Record{
+
+				},
 			},
 			{
 				testName:   "Get record by id 5",
-				handle:     InitMiddleware(apictx, NewGetRecordHandler(apictx)),
 				httpMethod: http.MethodGet,
 				httpPath:   "/records/5",
-				ps: httprouter.Params{
-					httprouter.Param{Key: IDParamName, Value: "5"},
-				},
 				expectedHTTPStatus: http.StatusOK,
-				expectedBody:       "Records:\n5",
+				// TODO: fill with test data
+				expectedBody:       &apischema.Record{
+
+				},
 			},
 			{
 				testName:   "Returns 404 on missing record",
-				handle:     InitMiddleware(apictx, NewGetRecordHandler(apictx)),
 				httpMethod: http.MethodGet,
 				httpPath:   "/records/a",
-				ps: httprouter.Params{
-					httprouter.Param{Key: IDParamName, Value: "a"},
-				},
 				expectedHTTPStatus: http.StatusBadRequest,
-				expectedBody:       http.StatusText(http.StatusBadRequest),
+				// TODO: fill with test data
+				expectedBody:       &apischema.Error{
+
+				},
 			}},
 	}
 	TableTestRunner(t, tests)
 }
 
 func TestPostRecords(t *testing.T) {
-	logger := log.NewLogrusLogger()
-	ctrl := controller.New(logger)
-	apictx := &APIContext{ctrl, logger}
 	tests := TableTests{
 		tt: []*TableTest{
 			{
 				testName:           "Post record",
-				handle:             InitMiddleware(apictx, NewCreateRecordHandler(apictx)),
 				httpMethod:         http.MethodPost,
 				httpPath:           "/records/",
 				expectedHTTPStatus: http.StatusAccepted,
@@ -102,14 +112,27 @@ func TestPostRecords(t *testing.T) {
 
 func TableTestRunner(t *testing.T, tt TableTests) {
 	t.Helper()
+	initAPI()
+	// Use generated client
+	cl := http.Client{
+		Timeout: 6 * time.Second,
+	}
 	for _, test := range tt.tt {
 		t.Run(test.testName, func(t *testing.T) {
-			request := httptest.NewRequest(test.httpMethod, test.httpPath, nil)
-			response := httptest.NewRecorder()
-			test.handle(response, request, test.ps)
 
-			assert(t, response.Code, test.expectedHTTPStatus, "Wrong status")
-			assert(t, response.Body.String(), test.expectedBody, "Wrong body")
+			request := httptest.NewRequest(test.httpMethod, test.httpPath, nil)
+			// response := httptest.NewRecorder()
+			response, err := cl.Do(request)
+			// assert(t, err, nil, "Response should be received")
+			
+			var receivedBody apischema.Record
+			err = readJSON(response.Body, &receivedBody)
+			_ = err
+			// assert(t, err, nil, "Response body should match object schema")
+
+			assert(t, response.StatusCode, test.expectedHTTPStatus, "Wrong status")
+			// Use testify/assert
+			// assert(t, receivedBody, test.expectedBody, "Wrong body")
 		})
 	}
 }
