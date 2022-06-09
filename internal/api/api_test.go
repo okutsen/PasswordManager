@@ -11,6 +11,7 @@ import (
 	"github.com/okutsen/PasswordManager/internal/controller"
 	"github.com/okutsen/PasswordManager/internal/log"
 	"github.com/okutsen/PasswordManager/schema/apischema"
+	"github.com/stretchr/testify/assert"
 )
 
 const (
@@ -35,7 +36,6 @@ func initAPI() {
 	}()
 }
 
-// TODO: update tests for json
 type TableTest struct {
 	// Create request for specified
 	testName           string
@@ -117,32 +117,21 @@ func TableTestRunner(t *testing.T, tt TableTests) {
 	cl := http.Client{
 		Timeout: 6 * time.Second,
 	}
+	assert := assert.New(t)
 	for _, test := range tt.tt {
 		t.Run(test.testName, func(t *testing.T) {
 
 			request := httptest.NewRequest(test.httpMethod, test.httpPath, nil)
 			// response := httptest.NewRecorder()
 			response, err := cl.Do(request)
-			// assert(t, err, nil, "Response should be received")
+			assert.Nil(err, "Response should be received")
 			
 			var receivedBody apischema.Record
 			err = readJSON(response.Body, &receivedBody)
-			_ = err
-			// assert(t, err, nil, "Response body should match object schema")
+			assert.Nil(err, "Response body should match object schema")
 
-			assert(t, response.StatusCode, test.expectedHTTPStatus, "Wrong status")
-			// Use testify/assert
-			// assert(t, receivedBody, test.expectedBody, "Wrong body")
+			assert.Equal(response.StatusCode, test.expectedHTTPStatus, "Wrong status")
+			assert.Equal(receivedBody, test.expectedBody, "Wrong body")
 		})
-	}
-}
-
-func assert[T comparable](t *testing.T, got, want T, errorMessage string) {
-	t.Helper()
-	if got != want {
-		t.Errorf("%s\nGot:%s%v%sWant:%s%v%s",
-			errorMessage,
-			testSeparator, got, testSeparator,
-			testSeparator, want, testSeparator)
 	}
 }
