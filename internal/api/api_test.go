@@ -5,7 +5,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
 
 	"github.com/okutsen/PasswordManager/internal/controller"
@@ -16,14 +15,13 @@ const (
 	testSeparator string = "\n---------------------\n"
 )
 
-// FIXME: update tests for json
+// TODO: update tests for json
 type TableTest struct {
 	// Create request for specified
-	testName   string
-	handle     HandlerFunc
-	httpMethod string
-	httpPath   string
-	// TODO: constructs params with a func
+	testName           string
+	handle             httprouter.Handle
+	httpMethod         string
+	httpPath           string
 	ps                 httprouter.Params
 	expectedHTTPStatus int
 	expectedBody       string
@@ -36,12 +34,12 @@ type TableTests struct {
 func TestGetRecords(t *testing.T) {
 	logger := log.NewLogrusLogger()
 	ctrl := controller.New(logger)
-	ctx := &APIContext{ctrl, logger}
+	apictx := &APIContext{ctrl, logger}
 	tests := TableTests{
 		tt: []*TableTest{
 			{
 				testName:           "Get all records",
-				handle:             NewGetAllRecordsHandler(ctx),
+				handle:             InitMiddleware(apictx, NewGetAllRecordsHandler(apictx)),
 				httpMethod:         http.MethodGet,
 				httpPath:           "/records",
 				expectedHTTPStatus: http.StatusOK,
@@ -49,7 +47,7 @@ func TestGetRecords(t *testing.T) {
 			},
 			{
 				testName:   "Get record by id 1",
-				handle:     NewGetRecordHandler(ctx),
+				handle:     InitMiddleware(apictx, NewGetRecordHandler(apictx)),
 				httpMethod: http.MethodGet,
 				httpPath:   "/records/0",
 				ps: httprouter.Params{
@@ -60,7 +58,7 @@ func TestGetRecords(t *testing.T) {
 			},
 			{
 				testName:   "Get record by id 5",
-				handle:     NewGetRecordHandler(ctx),
+				handle:     InitMiddleware(apictx, NewGetRecordHandler(apictx)),
 				httpMethod: http.MethodGet,
 				httpPath:   "/records/5",
 				ps: httprouter.Params{
@@ -71,7 +69,7 @@ func TestGetRecords(t *testing.T) {
 			},
 			{
 				testName:   "Returns 404 on missing record",
-				handle:     NewGetRecordHandler(ctx),
+				handle:     InitMiddleware(apictx, NewGetRecordHandler(apictx)),
 				httpMethod: http.MethodGet,
 				httpPath:   "/records/a",
 				ps: httprouter.Params{
@@ -87,16 +85,16 @@ func TestGetRecords(t *testing.T) {
 func TestPostRecords(t *testing.T) {
 	logger := log.NewLogrusLogger()
 	ctrl := controller.New(logger)
-	ctx := &APIContext{ctrl, logger}
+	apictx := &APIContext{ctrl, logger}
 	tests := TableTests{
 		tt: []*TableTest{
 			{
 				testName:           "Post record",
-				handle:             NewCreateRecordHandler(ctx),
+				handle:             InitMiddleware(apictx, NewCreateRecordHandler(apictx)),
 				httpMethod:         http.MethodPost,
 				httpPath:           "/records/",
 				expectedHTTPStatus: http.StatusAccepted,
-				expectedBody:       "",    // workaround
+				expectedBody:       "", // workaround
 			}},
 	}
 	TableTestRunner(t, tests)
@@ -108,7 +106,7 @@ func TableTestRunner(t *testing.T, tt TableTests) {
 		t.Run(test.testName, func(t *testing.T) {
 			request := httptest.NewRequest(test.httpMethod, test.httpPath, nil)
 			response := httptest.NewRecorder()
-			test.handle(response, request, &RequestContext{corID: uuid.New(), ps: test.ps})
+			test.handle(response, request, test.ps)
 
 			assert(t, response.Code, test.expectedHTTPStatus, "Wrong status")
 			assert(t, response.Body.String(), test.expectedBody, "Wrong body")

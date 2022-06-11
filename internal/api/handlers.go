@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -14,9 +15,8 @@ import (
 )
 
 const (
-	// Header Keys
-	// Parse or get them from somewhere?
-	CorrelationIDName = "X-Request-ID"
+	CorrelationIDName  = "X-Request-ID"
+	RequestContextName string = "rctx"
 )
 
 type RequestContext struct {
@@ -24,19 +24,22 @@ type RequestContext struct {
 	ps    httprouter.Params
 }
 
-type HandlerFunc func(rw http.ResponseWriter, r *http.Request, ctx *RequestContext)
-
-// Name?
-func InitMiddleware(ctx *APIContext, next HandlerFunc) httprouter.Handle {
+// InitMiddleware reads header, creates RequestContext and adds it to r.Context
+func InitMiddleware(ctx *APIContext, next http.HandlerFunc) httprouter.Handle {
 	return func(rw http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		// When to Info vs Debug
 		ctx.logger.Debugf("Endpoint Hit: %s %s%s", r.Method, r.Host, r.URL.Path)
 		corIDStr := r.Header.Get(CorrelationIDName)
 		corID := parseRequestID(corIDStr, ctx.logger)
-		next(rw, r, &RequestContext{corID: corID, ps: ps})
+		ctx := context.WithValue(r.Context(), RequestContextName, &RequestContext{
+			corID: corID,
+			ps:    ps,
+		})
+		r = r.WithContext(ctx)
+		next(rw, r)
 	}
 }
 
+// parseRequestID 
 func parseRequestID(idStr string, logger log.Logger) uuid.UUID {
 	id, err := uuid.Parse(idStr)
 	if err != nil {
@@ -48,11 +51,21 @@ func parseRequestID(idStr string, logger log.Logger) uuid.UUID {
 	return id
 }
 
-func NewGetAllRecordsHandler(apictx *APIContext) HandlerFunc {
+// unpackContext gets and validates RequestContext from ctx
+func unpackRequestContext(ctx context.Context, logger log.Logger) *RequestContext {
+	rctx, ok := ctx.Value(RequestContextName).(*RequestContext)
+	if !ok {
+		logger.Fatalf("Failed to unpack request context, got: %s", rctx)
+	}
+	return rctx
+}
+
+func NewGetAllRecordsHandler(apictx *APIContext) http.HandlerFunc {
 	logger := apictx.logger.WithFields(log.Fields{"handler": "GetAllRecords"})
-	return func(w http.ResponseWriter, r *http.Request, rctx *RequestContext) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		rctx := unpackRequestContext(r.Context(), logger)
 		logger = logger.WithFields(log.Fields{
-			"corID": rctx.corID,
+			"cor_id": rctx.corID.String(),
 		})
 		records, err := apictx.ctrl.GetAllRecords()
 		if err != nil {
@@ -66,13 +79,14 @@ func NewGetAllRecordsHandler(apictx *APIContext) HandlerFunc {
 	}
 }
 
-func NewGetRecordHandler(apictx *APIContext) HandlerFunc {
+func NewGetRecordHandler(apictx *APIContext) http.HandlerFunc {
 	logger := apictx.logger.WithFields(log.Fields{
 		"handler": "GetRecord",
 	})
-	return func(w http.ResponseWriter, r *http.Request, rctx *RequestContext) {
-		logger := logger.WithFields(log.Fields{
-			"corID": rctx.corID,
+	return func(w http.ResponseWriter, r *http.Request) {
+		rctx := unpackRequestContext(r.Context(), logger)
+		logger = logger.WithFields(log.Fields{
+			"cor_id": rctx.corID.String(),
 		})
 		idStr := rctx.ps.ByName(IDParamName)
 		recordUUID, err := uuid.Parse(idStr)
@@ -94,13 +108,14 @@ func NewGetRecordHandler(apictx *APIContext) HandlerFunc {
 	}
 }
 
-func NewCreateRecordHandler(apictx *APIContext) HandlerFunc {
+func NewCreateRecordHandler(apictx *APIContext) http.HandlerFunc {
 	logger := apictx.logger.WithFields(log.Fields{
 		"handler": "CreateRecord",
 	})
-	return func(w http.ResponseWriter, r *http.Request, rctx *RequestContext) {
-		logger := logger.WithFields(log.Fields{
-			"corID": rctx.corID,
+	return func(w http.ResponseWriter, r *http.Request) {
+		rctx := unpackRequestContext(r.Context(), logger)
+		logger = logger.WithFields(log.Fields{
+			"cor_id": rctx.corID.String(),
 		})
 		// TODO: check content type
 		var recordAPI *apischema.Record
@@ -126,13 +141,14 @@ func NewCreateRecordHandler(apictx *APIContext) HandlerFunc {
 	}
 }
 
-func NewUpdateRecordHandler(apictx *APIContext) HandlerFunc {
+func NewUpdateRecordHandler(apictx *APIContext) http.HandlerFunc {
 	logger := apictx.logger.WithFields(log.Fields{
 		"handler": "UpdateRecords",
 	})
-	return func(w http.ResponseWriter, r *http.Request, rctx *RequestContext) {
-		logger := logger.WithFields(log.Fields{
-			"corID": rctx.corID,
+	return func(w http.ResponseWriter, r *http.Request) {
+		rctx := unpackRequestContext(r.Context(), logger)
+		logger = logger.WithFields(log.Fields{
+			"cor_id": rctx.corID.String(),
 		})
 		// TODO: check content type
 		var recordAPI *apischema.Record
@@ -157,14 +173,16 @@ func NewUpdateRecordHandler(apictx *APIContext) HandlerFunc {
 	}
 }
 
-func NewDeleteRecordHandler(apictx *APIContext) HandlerFunc {
+func NewDeleteRecordHandler(apictx *APIContext) http.HandlerFunc {
 	logger := apictx.logger.WithFields(log.Fields{
 		"handler": "DeleteRecords",
 	})
-	return func(w http.ResponseWriter, r *http.Request, rctx *RequestContext) {
-		logger := logger.WithFields(log.Fields{
-			"corID": rctx.corID,
+	return func(w http.ResponseWriter, r *http.Request) {
+		rctx := unpackRequestContext(r.Context(), logger)
+		logger = logger.WithFields(log.Fields{
+			"cor_id": rctx.corID.String(),
 		})
+		// FIXME: can be empty because of ctx validation
 		idStr := rctx.ps.ByName(IDParamName)
 		recordUUID, err := uuid.Parse(idStr)
 		if err != nil {
