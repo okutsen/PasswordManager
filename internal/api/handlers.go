@@ -75,6 +75,7 @@ func NewListRecordsHandler(apictx *APIContext) http.HandlerFunc {
 			return
 		}
 		recordsAPI := schemabuilder.BuildRecordsAPIFrom(records)
+		// Write JSON by stream?
 		writeJSONResponse(w, logger, recordsAPI, http.StatusOK)
 	}
 }
@@ -137,7 +138,7 @@ func NewCreateRecordHandler(apictx *APIContext) http.HandlerFunc {
 			return
 		}
 		// TODO: get record from db
-		writeJSONResponse(w, logger, schemabuilder.BuildRecordAPIFrom(record), http.StatusAccepted)
+		writeJSONResponse(w, logger, schemabuilder.BuildRecordAPIFrom(record), http.StatusCreated)
 	}
 }
 
