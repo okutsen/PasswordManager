@@ -17,7 +17,7 @@ const (
 )
 
 type Controller interface {
-	GetAllRecords() ([]*dbschema.Record, error)
+	ListRecords() ([]*dbschema.Record, error)
 	GetRecord(uuid.UUID) (*dbschema.Record, error)
 	CreateRecord(*dbschema.Record) error
 	UpdateRecord(*dbschema.Record) error
@@ -49,7 +49,7 @@ func (api *API) Start() error {
 	api.ctx.logger.Info("API started")
 	router := httprouter.New()
 
-	router.GET("/records", InitMiddleware(api.ctx, NewGetAllRecordsHandler(api.ctx)))
+	router.GET("/records", InitMiddleware(api.ctx, NewListRecordsHandler(api.ctx)))
 	router.GET(fmt.Sprintf("/records/:%s", IDParamName), InitMiddleware(api.ctx, NewGetRecordHandler(api.ctx)))
 	router.POST("/records", InitMiddleware(api.ctx, NewCreateRecordHandler(api.ctx)))
 	router.PUT("/records", InitMiddleware(api.ctx, NewUpdateRecordHandler(api.ctx)))

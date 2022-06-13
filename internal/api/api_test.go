@@ -39,7 +39,7 @@ func TestGetRecords(t *testing.T) {
 		tt: []*TableTest{
 			{
 				testName:           "Get all records",
-				handle:             InitMiddleware(apictx, NewGetAllRecordsHandler(apictx)),
+				handle:             InitMiddleware(apictx, NewListRecordsHandler(apictx)),
 				httpMethod:         http.MethodGet,
 				httpPath:           "/records",
 				expectedHTTPStatus: http.StatusOK,

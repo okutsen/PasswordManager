@@ -60,14 +60,14 @@ func unpackRequestContext(ctx context.Context, logger log.Logger) *RequestContex
 	return rctx
 }
 
-func NewGetAllRecordsHandler(apictx *APIContext) http.HandlerFunc {
+func NewListRecordsHandler(apictx *APIContext) http.HandlerFunc {
 	logger := apictx.logger.WithFields(log.Fields{"handler": "GetAllRecords"})
 	return func(w http.ResponseWriter, r *http.Request) {
 		rctx := unpackRequestContext(r.Context(), logger)
 		logger = logger.WithFields(log.Fields{
 			"cor_id": rctx.corID.String(),
 		})
-		records, err := apictx.ctrl.GetAllRecords()
+		records, err := apictx.ctrl.ListRecords()
 		if err != nil {
 			logger.Warnf("Failed to get records from controller: %s", err.Error())
 			writeJSONResponse(w, logger,

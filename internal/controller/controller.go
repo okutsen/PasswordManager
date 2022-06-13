@@ -17,7 +17,7 @@ func New(logger log.Logger) *Controller {
 	}
 }
 
-func (c *Controller) GetAllRecords() ([]*dbschema.Record, error) {
+func (c *Controller) ListRecords() ([]*dbschema.Record, error) {
 	// queryResult := repo.GetAllRecords()
 	return []*dbschema.Record{
 		{
