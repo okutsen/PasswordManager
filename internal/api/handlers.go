@@ -162,7 +162,7 @@ func NewUpdateRecordHandler(apictx *APIContext) http.HandlerFunc {
 			return
 		}
 		record := schemabuilder.BuildRecordFrom(recordAPI)
-		err = apictx.ctrl.CreateRecord(record)
+		err = apictx.ctrl.UpdateRecord(record)
 		if err != nil {
 			logger.Warnf("Failed to get records from controller: %s", err.Error())
 			writeJSONResponse(w, logger,
