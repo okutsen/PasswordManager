@@ -23,6 +23,7 @@ func NewOpenAPIv3(cfg *Config) *openapi3.T {
 			},
 		},
 	}
+	// TODO: use openapi3gen to generate schemas from go structs
 	spec.Components.Schemas = openapi3.Schemas{
 		// TODO: add required properties
 		"Record": openapi3.NewSchemaRef("",

@@ -6,15 +6,16 @@ import (
 	"os"
 	"path"
 
-	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/okutsen/PasswordManager/config"
 	"github.com/okutsen/PasswordManager/internal/api"
 	"github.com/okutsen/PasswordManager/internal/log"
-	"gopkg.in/yaml.v2"
+
+	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/invopop/yaml"
 )
 
 const (
-	defaultOutputPath     = "../../api"
+	defaultOutputPath     = "."
 	defaultOutputFileType = "yaml"
 )
 
@@ -25,7 +26,7 @@ func main() {
 	var outputFileType string
 
 	flag.StringVar(&outputPath, "path", defaultOutputPath, "Path to use for generating OpenAPIv3 spec")
-	flag.StringVar(&outputFileType, "file_type", defaultOutputFileType, "File type of an output: \"json\", \"yaml\" or \"both\"")
+	flag.StringVar(&outputFileType, "file-type", defaultOutputFileType, "File type of an output: \"json\", \"yaml\" or \"both\"")
 	flag.Parse()
 
 	if outputFileType != "json" && outputFileType != "yaml" && outputFileType != "both" {
@@ -48,7 +49,7 @@ func main() {
 		genJSON(spec, outputPath, logger)
 		genYAML(spec, outputPath, logger)
 	}
-	logger.Info("Generated successfully")
+	logger.Infof("Successfully generated. Path: %s", outputPath)
 }
 
 func genJSON(spec *openapi3.T, targetPath string, logger log.Logger) {
