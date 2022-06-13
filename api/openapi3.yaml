@@ -1,0 +1,133 @@
+components:
+    parameters:
+        CorrelationIDHeaderParam:
+            description: Correlation id
+            in: header
+            name: X-Request-ID
+            schema:
+                format: uuid
+                type: string
+        RecordIDPathParam:
+            in: path
+            name: RecordID
+            required: true
+            schema:
+                format: uuid
+                type: string
+    requestBodies:
+        CreateRecordRequest:
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/Record'
+            description: Request used for creating a record.
+            required: true
+        UpdateRecordRequest:
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/Record'
+            description: Request used for updating a record.
+            required: true
+    responses:
+        ErrorResponse:
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/Error'
+            description: Response when errors happen.
+        ListRecordsResponse:
+            content:
+                application/json:
+                    schema:
+                        items:
+                            $ref: '#/components/schemas/Record'
+                        type: array
+            description: Response returns back all records.
+        RecordResponse:
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/Record'
+            description: Response returns back successfully found or created record.
+    schemas:
+        Error:
+            properties:
+                message:
+                    type: string
+            type: object
+        Record:
+            properties:
+                id:
+                    format: uuid
+                    type: string
+                login:
+                    type: string
+                name:
+                    type: string
+                password:
+                    type: string
+            type: object
+info:
+    contact:
+        url: https://github.com/okutsen/PasswordManager
+    title: Password Manager
+    version: 0.0.0
+openapi: 3.0.0
+paths:
+    /records:
+        get:
+            operationId: ListRecords
+            responses:
+                "200":
+                    $ref: '#/components/responses/ListRecordsResponse'
+                "500":
+                    $ref: '#/components/responses/ErrorResponse'
+        post:
+            operationId: CreateRecord
+            requestBody:
+                $ref: '#/components/requestBodies/CreateRecordRequest'
+            responses:
+                "201":
+                    $ref: '#/components/responses/RecordResponse'
+                "400":
+                    $ref: '#/components/responses/ErrorResponse'
+                "500":
+                    $ref: '#/components/responses/ErrorResponse'
+        put:
+            operationId: UpdateRecord
+            requestBody:
+                $ref: '#/components/requestBodies/UpdateRecordRequest'
+            responses:
+                "202":
+                    $ref: '#/components/responses/RecordResponse'
+                "400":
+                    $ref: '#/components/responses/ErrorResponse'
+                "500":
+                    $ref: '#/components/responses/ErrorResponse'
+    /records/{RecordID}:
+        delete:
+            operationId: DeleteRecord
+            parameters:
+                - $ref: '#/components/parameters/RecordIDPathParam'
+            responses:
+                "200":
+                    description: Record deleted
+                "400":
+                    $ref: '#/components/responses/ErrorResponse'
+                "500":
+                    $ref: '#/components/responses/ErrorResponse'
+        get:
+            operationId: GetRecord
+            parameters:
+                - $ref: '#/components/parameters/RecordIDPathParam'
+            responses:
+                "200":
+                    $ref: '#/components/responses/RecordResponse'
+                "400":
+                    $ref: '#/components/responses/ErrorResponse'
+                "500":
+                    $ref: '#/components/responses/ErrorResponse'
+servers:
+    - description: Local development
+      url: http://127.0.0.1:10000
