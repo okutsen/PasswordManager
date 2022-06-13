@@ -89,7 +89,7 @@ func NewGetRecordHandler(apictx *APIContext) http.HandlerFunc {
 		logger = logger.WithFields(log.Fields{
 			"cor_id": rctx.corID.String(),
 		})
-		idStr := rctx.ps.ByName(IDParamName)
+		idStr := rctx.ps.ByName(IDPathParamName)
 		recordUUID, err := uuid.Parse(idStr)
 		if err != nil {
 			logger.Warnf("Failed to convert path parameter id: %s", err.Error())
@@ -184,7 +184,7 @@ func NewDeleteRecordHandler(apictx *APIContext) http.HandlerFunc {
 			"cor_id": rctx.corID.String(),
 		})
 		// FIXME: can be empty because of ctx validation
-		idStr := rctx.ps.ByName(IDParamName)
+		idStr := rctx.ps.ByName(IDPathParamName)
 		recordUUID, err := uuid.Parse(idStr)
 		if err != nil {
 			logger.Warnf("Failed to convert path parameter id: %s", err.Error())
