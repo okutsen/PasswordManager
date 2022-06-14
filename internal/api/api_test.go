@@ -39,7 +39,7 @@ func TestGetRecords(t *testing.T) {
 		tt: []*TableTest{
 			{
 				testName:           "Get all records",
-				handle:             InitMiddleware(apictx, NewGetAllRecordsHandler(apictx)),
+				handle:             InitMiddleware(apictx, NewListRecordsHandler(apictx)),
 				httpMethod:         http.MethodGet,
 				httpPath:           "/records",
 				expectedHTTPStatus: http.StatusOK,
@@ -51,7 +51,7 @@ func TestGetRecords(t *testing.T) {
 				httpMethod: http.MethodGet,
 				httpPath:   "/records/0",
 				ps: httprouter.Params{
-					httprouter.Param{Key: IDParamName, Value: "0"},
+					httprouter.Param{Key: IDPathParamName, Value: "0"},
 				},
 				expectedHTTPStatus: http.StatusOK,
 				expectedBody:       "Records:\n0",
@@ -62,7 +62,7 @@ func TestGetRecords(t *testing.T) {
 				httpMethod: http.MethodGet,
 				httpPath:   "/records/5",
 				ps: httprouter.Params{
-					httprouter.Param{Key: IDParamName, Value: "5"},
+					httprouter.Param{Key: IDPathParamName, Value: "5"},
 				},
 				expectedHTTPStatus: http.StatusOK,
 				expectedBody:       "Records:\n5",
@@ -73,7 +73,7 @@ func TestGetRecords(t *testing.T) {
 				httpMethod: http.MethodGet,
 				httpPath:   "/records/a",
 				ps: httprouter.Params{
-					httprouter.Param{Key: IDParamName, Value: "a"},
+					httprouter.Param{Key: IDPathParamName, Value: "a"},
 				},
 				expectedHTTPStatus: http.StatusBadRequest,
 				expectedBody:       http.StatusText(http.StatusBadRequest),

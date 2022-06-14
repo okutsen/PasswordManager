@@ -60,14 +60,14 @@ func unpackRequestContext(ctx context.Context, logger log.Logger) *RequestContex
 	return rctx
 }
 
-func NewGetAllRecordsHandler(apictx *APIContext) http.HandlerFunc {
+func NewListRecordsHandler(apictx *APIContext) http.HandlerFunc {
 	logger := apictx.logger.WithFields(log.Fields{"handler": "GetAllRecords"})
 	return func(w http.ResponseWriter, r *http.Request) {
 		rctx := unpackRequestContext(r.Context(), logger)
 		logger = logger.WithFields(log.Fields{
 			"cor_id": rctx.corID.String(),
 		})
-		records, err := apictx.ctrl.GetAllRecords()
+		records, err := apictx.ctrl.ListRecords()
 		if err != nil {
 			logger.Warnf("Failed to get records from controller: %s", err.Error())
 			writeJSONResponse(w, logger,
@@ -75,6 +75,7 @@ func NewGetAllRecordsHandler(apictx *APIContext) http.HandlerFunc {
 			return
 		}
 		recordsAPI := schemabuilder.BuildRecordsAPIFrom(records)
+		// Write JSON by stream?
 		writeJSONResponse(w, logger, recordsAPI, http.StatusOK)
 	}
 }
@@ -88,7 +89,7 @@ func NewGetRecordHandler(apictx *APIContext) http.HandlerFunc {
 		logger = logger.WithFields(log.Fields{
 			"cor_id": rctx.corID.String(),
 		})
-		idStr := rctx.ps.ByName(IDParamName)
+		idStr := rctx.ps.ByName(IDPathParamName)
 		recordUUID, err := uuid.Parse(idStr)
 		if err != nil {
 			logger.Warnf("Failed to convert path parameter id: %s", err.Error())
@@ -137,7 +138,7 @@ func NewCreateRecordHandler(apictx *APIContext) http.HandlerFunc {
 			return
 		}
 		// TODO: get record from db
-		writeJSONResponse(w, logger, schemabuilder.BuildRecordAPIFrom(record), http.StatusAccepted)
+		writeJSONResponse(w, logger, schemabuilder.BuildRecordAPIFrom(record), http.StatusCreated)
 	}
 }
 
@@ -161,7 +162,7 @@ func NewUpdateRecordHandler(apictx *APIContext) http.HandlerFunc {
 			return
 		}
 		record := schemabuilder.BuildRecordFrom(recordAPI)
-		err = apictx.ctrl.CreateRecord(record)
+		err = apictx.ctrl.UpdateRecord(record)
 		if err != nil {
 			logger.Warnf("Failed to get records from controller: %s", err.Error())
 			writeJSONResponse(w, logger,
@@ -183,7 +184,7 @@ func NewDeleteRecordHandler(apictx *APIContext) http.HandlerFunc {
 			"cor_id": rctx.corID.String(),
 		})
 		// FIXME: can be empty because of ctx validation
-		idStr := rctx.ps.ByName(IDParamName)
+		idStr := rctx.ps.ByName(IDPathParamName)
 		recordUUID, err := uuid.Parse(idStr)
 		if err != nil {
 			logger.Warnf("Failed to convert path parameter id: %s", err.Error())

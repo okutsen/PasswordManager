@@ -13,11 +13,11 @@ import (
 )
 
 const (
-	IDParamName = "id"
+	IDPathParamName = "RecordID"
 )
 
 type Controller interface {
-	GetAllRecords() ([]*dbschema.Record, error)
+	ListRecords() ([]*dbschema.Record, error)
 	GetRecord(uuid.UUID) (*dbschema.Record, error)
 	CreateRecord(*dbschema.Record) error
 	UpdateRecord(*dbschema.Record) error
@@ -49,11 +49,11 @@ func (api *API) Start() error {
 	api.ctx.logger.Info("API started")
 	router := httprouter.New()
 
-	router.GET("/records", InitMiddleware(api.ctx, NewGetAllRecordsHandler(api.ctx)))
-	router.GET(fmt.Sprintf("/records/:%s", IDParamName), InitMiddleware(api.ctx, NewGetRecordHandler(api.ctx)))
+	router.GET("/records", InitMiddleware(api.ctx, NewListRecordsHandler(api.ctx)))
+	router.GET(fmt.Sprintf("/records/:%s", IDPathParamName), InitMiddleware(api.ctx, NewGetRecordHandler(api.ctx)))
 	router.POST("/records", InitMiddleware(api.ctx, NewCreateRecordHandler(api.ctx)))
 	router.PUT("/records", InitMiddleware(api.ctx, NewUpdateRecordHandler(api.ctx)))
-	router.DELETE(fmt.Sprintf("/records/:%s", IDParamName), InitMiddleware(api.ctx, NewDeleteRecordHandler(api.ctx)))
+	router.DELETE(fmt.Sprintf("/records/:%s", IDPathParamName), InitMiddleware(api.ctx, NewDeleteRecordHandler(api.ctx)))
 
 	api.server = http.Server{Addr: api.config.Address(), Handler: router}
 
@@ -61,6 +61,6 @@ func (api *API) Start() error {
 }
 
 func (api *API) Stop(ctx context.Context) error {
-	api.ctx.logger.Infof("shutting down server")
+	api.ctx.logger.Infof("Shutting down server")
 	return api.server.Shutdown(ctx)
 }
