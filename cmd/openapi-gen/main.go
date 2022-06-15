@@ -20,7 +20,7 @@ const (
 )
 
 func main() {
-	var logger log.Logger = log.NewLogrusLogger()
+	var logger log.Logger = log.New()
 
 	var outputPath string
 	var outputFileType string
@@ -33,12 +33,12 @@ func main() {
 		logger.Fatalf("Invalid file_type flag: %s", outputFileType)
 	}
 
-	cfg, err := config.NewConfig()
+	cfg, err := config.New()
 	if err != nil {
 		logger.Fatalf("Failed to initialize config: %v", err)
 	}
 
-	spec := api.NewOpenAPIv3(&api.Config{Port: cfg.Port})
+	spec := api.NewOpenAPIv3(&api.Config{Port: cfg.API.Port})
 
 	switch outputFileType {
 	case "json":
