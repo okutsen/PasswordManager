@@ -3,30 +3,25 @@ package api
 import (
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
 
-	"github.com/okutsen/PasswordManager/config"
 	"github.com/okutsen/PasswordManager/internal/controller"
 	"github.com/okutsen/PasswordManager/internal/log"
-	"github.com/okutsen/PasswordManager/internal/repo"
 )
 
 const (
 	testSeparator string = "\n---------------------\n"
 )
 
-// FIXME: update tests for json
+// TODO: update tests for json
 type TableTest struct {
 	// Create request for specified
-	testName   string
-	handle     HandlerFunc
-	httpMethod string
-	httpPath   string
-	// TODO: constructs params with a func
+	testName           string
+	handle             httprouter.Handle
+	httpMethod         string
+	httpPath           string
 	ps                 httprouter.Params
 	expectedHTTPStatus int
 	expectedBody       string
@@ -37,31 +32,14 @@ type TableTests struct {
 }
 
 func TestGetRecords(t *testing.T) {
-	logger := log.New()
-	cfg, err := config.New()
-	if err != nil {
-		logger.Errorf("failed to initialize config: %v", err)
-		os.Exit(1)
-	}
-	db, err := repo.New(&repo.Config{
-		Host:     cfg.DB.Host,
-		Port:     cfg.DB.Port,
-		DBName:   cfg.DB.DBName,
-		Username: cfg.DB.Username,
-		SSLMode:  cfg.DB.SSLMode,
-		Password: cfg.DB.Password,
-	})
-	if err != nil {
-		logger.Errorf("failed to initialize DB: %v", err)
-		os.Exit(1)
-	}
-	ctrl := controller.New(logger, *db)
-	ctx := &APIContext{ctrl, logger}
+	logger := log.NewLogrusLogger()
+	ctrl := controller.New(logger)
+	apictx := &APIContext{ctrl, logger}
 	tests := TableTests{
 		tt: []*TableTest{
 			{
 				testName:           "Get all records",
-				handle:             AllRecordsHandler(ctx),
+				handle:             InitMiddleware(apictx, NewListRecordsHandler(apictx)),
 				httpMethod:         http.MethodGet,
 				httpPath:           "/records",
 				expectedHTTPStatus: http.StatusOK,
@@ -69,33 +47,33 @@ func TestGetRecords(t *testing.T) {
 			},
 			{
 				testName:   "Get record by id 1",
-				handle:     RecordByIDHandler(ctx),
+				handle:     InitMiddleware(apictx, NewGetRecordHandler(apictx)),
 				httpMethod: http.MethodGet,
 				httpPath:   "/records/0",
 				ps: httprouter.Params{
-					httprouter.Param{Key: IDParamName, Value: "0"},
+					httprouter.Param{Key: IDPathParamName, Value: "0"},
 				},
 				expectedHTTPStatus: http.StatusOK,
 				expectedBody:       "Records:\n0",
 			},
 			{
 				testName:   "Get record by id 5",
-				handle:     RecordByIDHandler(ctx),
+				handle:     InitMiddleware(apictx, NewGetRecordHandler(apictx)),
 				httpMethod: http.MethodGet,
 				httpPath:   "/records/5",
 				ps: httprouter.Params{
-					httprouter.Param{Key: IDParamName, Value: "5"},
+					httprouter.Param{Key: IDPathParamName, Value: "5"},
 				},
 				expectedHTTPStatus: http.StatusOK,
 				expectedBody:       "Records:\n5",
 			},
 			{
 				testName:   "Returns 404 on missing record",
-				handle:     RecordByIDHandler(ctx),
+				handle:     InitMiddleware(apictx, NewGetRecordHandler(apictx)),
 				httpMethod: http.MethodGet,
 				httpPath:   "/records/a",
 				ps: httprouter.Params{
-					httprouter.Param{Key: IDParamName, Value: "a"},
+					httprouter.Param{Key: IDPathParamName, Value: "a"},
 				},
 				expectedHTTPStatus: http.StatusBadRequest,
 				expectedBody:       http.StatusText(http.StatusBadRequest),
@@ -105,31 +83,14 @@ func TestGetRecords(t *testing.T) {
 }
 
 func TestPostRecords(t *testing.T) {
-	logger := log.New()
-	cfg, err := config.New()
-	if err != nil {
-		logger.Errorf("failed to initialize config: %v", err)
-		os.Exit(1)
-	}
-	db, err := repo.New(&repo.Config{
-		Host:     cfg.DB.Host,
-		Port:     cfg.DB.Port,
-		DBName:   cfg.DB.DBName,
-		Username: cfg.DB.Username,
-		SSLMode:  cfg.DB.SSLMode,
-		Password: cfg.DB.Password,
-	})
-	if err != nil {
-		logger.Errorf("failed to initialize DB: %v", err)
-		os.Exit(1)
-	}
-	ctrl := controller.New(logger, *db)
-	ctx := &APIContext{ctrl, logger}
+	logger := log.NewLogrusLogger()
+	ctrl := controller.New(logger)
+	apictx := &APIContext{ctrl, logger}
 	tests := TableTests{
 		tt: []*TableTest{
 			{
 				testName:           "Post record",
-				handle:             CreateRecordHandler(ctx),
+				handle:             InitMiddleware(apictx, NewCreateRecordHandler(apictx)),
 				httpMethod:         http.MethodPost,
 				httpPath:           "/records/",
 				expectedHTTPStatus: http.StatusAccepted,
@@ -145,7 +106,7 @@ func TableTestRunner(t *testing.T, tt TableTests) {
 		t.Run(test.testName, func(t *testing.T) {
 			request := httptest.NewRequest(test.httpMethod, test.httpPath, nil)
 			response := httptest.NewRecorder()
-			test.handle(response, request, &RequestContext{corID: uuid.New(), ps: test.ps})
+			test.handle(response, request, test.ps)
 
 			assert(t, response.Code, test.expectedHTTPStatus, "Wrong status")
 			assert(t, response.Body.String(), test.expectedBody, "Wrong body")
