@@ -32,7 +32,7 @@ type TableTests struct {
 }
 
 func TestGetRecords(t *testing.T) {
-	logger := log.NewLogrusLogger()
+	logger := log.New()
 	ctrl := controller.New(logger)
 	apictx := &APIContext{ctrl, logger}
 	tests := TableTests{

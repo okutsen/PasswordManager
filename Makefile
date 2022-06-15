@@ -1,7 +1,7 @@
-NAME=Password-Manager
+NAME=PasswordManager
 PORT=10000
 DOCKER_NAME=password-manager
-MAIN_PATH=./cmd/main.go
+MAIN_PATH=./cmd/server/main.go
 TARGET_PATH=$(GOPATH)/bin
 TARGET=${TARGET_PATH}/${NAME}
 DB_CONNECTION=postgresql://admin:12345@localhost:5432/password_manager?sslmode=disable

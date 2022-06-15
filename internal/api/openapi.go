@@ -39,7 +39,7 @@ func NewOpenAPIv3(cfg *Config) *openapi3.T {
 	}
 	spec.Components.Parameters = openapi3.ParametersMap{
 		"RecordIDPathParam": &openapi3.ParameterRef{
-			Value: openapi3.NewPathParameter(IDPathParamName).
+			Value: openapi3.NewPathParameter(IDParamName).
 				WithSchema(openapi3.NewUUIDSchema()),
 		},
 		"CorrelationIDHeaderParam": &openapi3.ParameterRef{
@@ -71,7 +71,7 @@ func NewOpenAPIv3(cfg *Config) *openapi3.T {
 			Value: openapi3.NewResponse().
 				WithDescription("Response returns back all records.").
 				WithJSONSchema(&openapi3.Schema{
-					Type: openapi3.TypeArray,
+					Type:  openapi3.TypeArray,
 					Items: openapi3.NewSchemaRef("#/components/schemas/Record", nil),
 				}),
 		},
@@ -138,7 +138,7 @@ func NewOpenAPIv3(cfg *Config) *openapi3.T {
 				},
 			},
 		},
-		"/records/{" + IDPathParamName + "}": &openapi3.PathItem{
+		"/records/{" + IDParamName + "}": &openapi3.PathItem{
 			Get: &openapi3.Operation{
 				OperationID: "GetRecord",
 				Parameters: []*openapi3.ParameterRef{{
