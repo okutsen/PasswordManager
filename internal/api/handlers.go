@@ -24,33 +24,6 @@ type RequestContext struct {
 	ps    httprouter.Params
 }
 
-// InitMiddleware reads header, creates RequestContext and adds it to r.Context
-func InitMiddleware(ctx *APIContext, next http.HandlerFunc) httprouter.Handle {
-	return func(rw http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		ctx.logger.Debugf("Endpoint Hit: %s %s%s", r.Method, r.Host, r.URL.Path)
-		corIDStr := r.Header.Get(CorrelationIDName)
-		corID := parseRequestID(corIDStr, ctx.logger)
-		ctx := context.WithValue(r.Context(), RequestContextName, &RequestContext{
-			corID: corID,
-			ps:    ps,
-		})
-		r = r.WithContext(ctx)
-		next(rw, r)
-	}
-}
-
-// parseRequestID 
-func parseRequestID(idStr string, logger log.Logger) uuid.UUID {
-	id, err := uuid.Parse(idStr)
-	if err != nil {
-		logger.Warnf("Invalid corID <%s>: %s", idStr, err)
-		newID := uuid.New()
-		logger.Debugf("Setting new corID: %s", newID.String())
-		return newID
-	}
-	return id
-}
-
 // unpackContext gets and validates RequestContext from ctx
 func unpackRequestContext(ctx context.Context, logger log.Logger) *RequestContext {
 	rctx, ok := ctx.Value(RequestContextName).(*RequestContext)

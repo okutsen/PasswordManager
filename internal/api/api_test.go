@@ -39,7 +39,7 @@ func TestGetRecords(t *testing.T) {
 		tt: []*TableTest{
 			{
 				testName:           "Get all records",
-				handle:             InitMiddleware(apictx, NewListRecordsHandler(apictx)),
+				handle:             ContextSetter(apictx, NewListRecordsHandler(apictx)),
 				httpMethod:         http.MethodGet,
 				httpPath:           "/records",
 				expectedHTTPStatus: http.StatusOK,
@@ -47,7 +47,7 @@ func TestGetRecords(t *testing.T) {
 			},
 			{
 				testName:   "Get record by id 1",
-				handle:     InitMiddleware(apictx, NewGetRecordHandler(apictx)),
+				handle:     ContextSetter(apictx, NewGetRecordHandler(apictx)),
 				httpMethod: http.MethodGet,
 				httpPath:   "/records/0",
 				ps: httprouter.Params{
@@ -58,7 +58,7 @@ func TestGetRecords(t *testing.T) {
 			},
 			{
 				testName:   "Get record by id 5",
-				handle:     InitMiddleware(apictx, NewGetRecordHandler(apictx)),
+				handle:     ContextSetter(apictx, NewGetRecordHandler(apictx)),
 				httpMethod: http.MethodGet,
 				httpPath:   "/records/5",
 				ps: httprouter.Params{
@@ -69,7 +69,7 @@ func TestGetRecords(t *testing.T) {
 			},
 			{
 				testName:   "Returns 404 on missing record",
-				handle:     InitMiddleware(apictx, NewGetRecordHandler(apictx)),
+				handle:     ContextSetter(apictx, NewGetRecordHandler(apictx)),
 				httpMethod: http.MethodGet,
 				httpPath:   "/records/a",
 				ps: httprouter.Params{
@@ -90,7 +90,7 @@ func TestPostRecords(t *testing.T) {
 		tt: []*TableTest{
 			{
 				testName:           "Post record",
-				handle:             InitMiddleware(apictx, NewCreateRecordHandler(apictx)),
+				handle:             ContextSetter(apictx, NewCreateRecordHandler(apictx)),
 				httpMethod:         http.MethodPost,
 				httpPath:           "/records/",
 				expectedHTTPStatus: http.StatusAccepted,
