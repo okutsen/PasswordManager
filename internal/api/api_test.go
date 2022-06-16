@@ -7,8 +7,10 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 
+	"github.com/okutsen/PasswordManager/config"
 	"github.com/okutsen/PasswordManager/internal/controller"
 	"github.com/okutsen/PasswordManager/internal/log"
+	"github.com/okutsen/PasswordManager/internal/repo"
 )
 
 const (
@@ -31,10 +33,31 @@ type TableTests struct {
 	tt []*TableTest
 }
 
+func setup() *APIContext {
+	logger := log.New()
+	cfg, err := config.New()
+	if err != nil {
+		logger.Fatalf("failed to initialize config: %v", err)
+	}
+	db, err := repo.New(&repo.Config{
+		Host:     cfg.DB.Host,
+		Port:     cfg.DB.Port,
+		DBName:   cfg.DB.DBName,
+		Username: cfg.DB.Username,
+		SSLMode:  cfg.DB.SSLMode,
+		Password: cfg.DB.Password,
+	})
+	if err != nil {
+		logger.Fatalf("failed to initialize DB: %v", err)
+	}
+	logger.Info("DB is started")
+
+	ctrl := controller.New(logger, db)
+	return &APIContext{ctrl, logger}
+}
+
 func TestGetRecords(t *testing.T) {
-	logger := log.NewLogrusLogger()
-	ctrl := controller.New(logger)
-	apictx := &APIContext{ctrl, logger}
+	apictx := setup()
 	tests := TableTests{
 		tt: []*TableTest{
 			{
@@ -51,7 +74,7 @@ func TestGetRecords(t *testing.T) {
 				httpMethod: http.MethodGet,
 				httpPath:   "/records/0",
 				ps: httprouter.Params{
-					httprouter.Param{Key: RecordIDPPN, Value: "0"},
+					httprouter.Param{Key: IDPPN, Value: "0"},
 				},
 				expectedHTTPStatus: http.StatusOK,
 				expectedBody:       "Records:\n0",
@@ -62,7 +85,7 @@ func TestGetRecords(t *testing.T) {
 				httpMethod: http.MethodGet,
 				httpPath:   "/records/5",
 				ps: httprouter.Params{
-					httprouter.Param{Key: RecordIDPPN, Value: "5"},
+					httprouter.Param{Key: IDPPN, Value: "5"},
 				},
 				expectedHTTPStatus: http.StatusOK,
 				expectedBody:       "Records:\n5",
@@ -73,7 +96,7 @@ func TestGetRecords(t *testing.T) {
 				httpMethod: http.MethodGet,
 				httpPath:   "/records/a",
 				ps: httprouter.Params{
-					httprouter.Param{Key: RecordIDPPN, Value: "a"},
+					httprouter.Param{Key: IDPPN, Value: "a"},
 				},
 				expectedHTTPStatus: http.StatusBadRequest,
 				expectedBody:       http.StatusText(http.StatusBadRequest),
@@ -83,9 +106,7 @@ func TestGetRecords(t *testing.T) {
 }
 
 func TestPostRecords(t *testing.T) {
-	logger := log.NewLogrusLogger()
-	ctrl := controller.New(logger)
-	apictx := &APIContext{ctrl, logger}
+	apictx := setup()
 	tests := TableTests{
 		tt: []*TableTest{
 			{

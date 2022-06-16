@@ -12,25 +12,39 @@ import (
 	"github.com/okutsen/PasswordManager/internal/api"
 	"github.com/okutsen/PasswordManager/internal/controller"
 	"github.com/okutsen/PasswordManager/internal/log"
+	"github.com/okutsen/PasswordManager/internal/repo"
 )
 
 // TODO: password tips or reset questions
 
 func main() {
-	var logger log.Logger = log.NewLogrusLogger()
-	cfg, err := config.NewConfig()
+	logger := log.New()
+	cfg, err := config.New()
 	if err != nil {
-		logger.Fatalf("Failed to initialize config: %v", err)
+		logger.Fatalf("failed to initialize config: %v", err)
 	}
 
-	ctrl := controller.New(logger)
+	db, err := repo.New(&repo.Config{
+		Host:     cfg.DB.Host,
+		Port:     cfg.DB.Port,
+		DBName:   cfg.DB.DBName,
+		Username: cfg.DB.Username,
+		SSLMode:  cfg.DB.SSLMode,
+		Password: cfg.DB.Password,
+	})
+	if err != nil {
+		logger.Fatalf("failed to initialize DB: %v", err)
+	}
+	logger.Info("DB is started")
 
-	serviceAPI := api.New(&api.Config{Port: cfg.Port}, ctrl, logger)
+	ctrl := controller.New(logger, db)
+
+	serviceAPI := api.New(&api.Config{Port: cfg.API.Port}, ctrl, logger)
 
 	go func() {
 		err = serviceAPI.Start()
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			logger.Errorf("Failed to start application %v", err)
+			logger.Errorf("failed to start application %v", err)
 			return
 		}
 	}()
@@ -39,14 +53,19 @@ func main() {
 	signal.Notify(osSignals, syscall.SIGINT, syscall.SIGTERM)
 
 	osCall := <-osSignals
-	logger.Debugf("System call: %v", osCall)
+	logger.Infof("system call: %v", osCall)
 
-	ctx, cancel := context.WithTimeout(context.Background(), cfg.APIShutdownTimeout)
+	err = db.Close()
+	if err != nil {
+		logger.Warnf("failed to close DB: %v", err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), cfg.API.ShutdownTimeout)
 	defer cancel()
 
 	err = serviceAPI.Stop(ctx)
 	if err != nil {
-		logger.Fatalf("Failed to stop application %v", err)
+		logger.Fatalf("failed to stop application %v", err)
 	}
 
 }

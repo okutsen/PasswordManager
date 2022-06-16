@@ -1,8 +1,8 @@
 CREATE TABLE IF NOT EXISTS records
 (
     id uuid primary key,
-    name text unique not null,
-    login text unique not null,
+    name text not null,
+    login text not null,
     password text not null,
     url text,
     description text,

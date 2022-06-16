@@ -2,10 +2,10 @@ CREATE TABLE IF NOT EXISTS users
 (
     id uuid primary key,
     name text not null,
-    email text unique not null,
-    login text unique not null,
+    email text not null,
+    login text not null,
     password text not null,
-    phone text unique,
+    phone text,
     created_at timestamp,
     updated_at timestamp
 );
