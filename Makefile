@@ -1,6 +1,6 @@
 NAME=PasswordManager
 PORT=10000
-DOCKER_NAME=password-manager
+DOCKER_NAME=password_manager
 MAIN_PATH=./cmd/server/main.go
 TARGET_PATH=$(GOPATH)/bin
 TARGET=${TARGET_PATH}/${NAME}
@@ -28,6 +28,17 @@ docker_start: docker_build docker_run ## Create an image in docker and run a con
 
 docker_stop: ## Delete an image and container with name "password-manager"
 	docker stop ${DOCKER_NAME}; docker rm ${DOCKER_NAME}; docker rmi -f ${DOCKER_NAME}
+
+compose_up: ## Start all the services from docker-compose file in detached mode
+	docker-compose up -d
+
+compose_stop: ## Drop all the services from docker-compose file
+	docker-compose down
+
+delete_docker_image: ## Deletes an image of your program
+	docker image rmi ${DOCKER_NAME}
+
+compose_down: compose_stop delete_docker_image
 
 up: dependencies build run ## Update dependencies, build the project and run it
 

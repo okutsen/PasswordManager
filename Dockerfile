@@ -12,7 +12,7 @@ COPY internal/ ./internal
 COPY pkg/ ./pkg
 COPY schema/ ./schema
 
-RUN go build -o ./bin/pm ./cmd/
+RUN go build -o ./bin/pm ./cmd/server/
 
 
 FROM alpine:3.15 AS release

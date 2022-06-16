@@ -9,8 +9,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
 
-	"github.com/okutsen/PasswordManager/internal/log"
 	"github.com/okutsen/PasswordManager/schema/controllerSchema"
+
+	"github.com/okutsen/PasswordManager/internal/log"
 )
 
 const (

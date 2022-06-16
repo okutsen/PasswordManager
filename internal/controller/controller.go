@@ -46,29 +46,55 @@ func (c *Controller) AllRecords() ([]controllerSchema.Record, error) {
 }
 
 func (c *Controller) Record(id uuid.UUID) (*controllerSchema.Record, error) {
-	DBRecord, err := c.repo.RecordByID(id) // TODO: pass uuid
+	getRecord, err := c.repo.RecordByID(id)
 	if err != nil {
 		return nil, err
 	}
 
-	record := schemabuilder.BuildControllerRecordFromDBRecord(DBRecord)
+	decPassword, err := Decrypt(getRecord.Password, Salt)
+	getRecord.Password = decPassword
+
+	record := schemabuilder.BuildControllerRecordFromDBRecord(getRecord)
 	return &record, nil
 }
 
 // TODO: return specific errors to identify on api 404 Not found, 409 Conflict(if exists)
+
 func (c *Controller) CreateRecord(record *controllerSchema.Record) (*controllerSchema.Record, error) {
+	encPassword, err := Encrypt(record.Password, Salt)
+	if err != nil {
+		return nil, err
+	}
+
+	record.Password = encPassword
+
 	dbRecord := schemabuilder.BuildDBRecordFromControllerRecord(record)
 	createRecord, err := c.repo.CreateRecord(&dbRecord)
 	if err != nil {
 		return nil, err
 	}
 
+	decPassword, err := Decrypt(createRecord.Password, Salt)
+	if err != nil {
+		return nil, err
+	}
+
+	createRecord.Password = decPassword
+
 	createdRecord := schemabuilder.BuildControllerRecordFromDBRecord(createRecord)
 	return &createdRecord, nil
 }
 
 // 200, 204(if no changes?), 404
+
 func (c *Controller) UpdateRecord(id uuid.UUID, record *controllerSchema.Record) (*controllerSchema.Record, error) {
+	encPassword, err := Encrypt(record.Password, Salt)
+	if err != nil {
+		return nil, err
+	}
+
+	record.Password = encPassword
+
 	dbRecord := schemabuilder.BuildDBRecordFromControllerRecord(record)
 	dbRecord.ID = id
 
@@ -77,11 +103,19 @@ func (c *Controller) UpdateRecord(id uuid.UUID, record *controllerSchema.Record)
 		return nil, err
 	}
 
+	decPassword, err := Decrypt(updateRecord.Password, Salt)
+	if err != nil {
+		return nil, err
+	}
+
+	updateRecord.Password = decPassword
+
 	updatedRecord := schemabuilder.BuildControllerRecordFromDBRecord(updateRecord)
 	return &updatedRecord, nil
 }
 
 // 200, 404
+
 func (c *Controller) DeleteRecord(id uuid.UUID) (*controllerSchema.Record, error) {
 	dbRecord, err := c.repo.DeleteRecord(id)
 	if err != nil {
@@ -109,6 +143,9 @@ func (c *Controller) User(id uuid.UUID) (*controllerSchema.User, error) {
 		return nil, err
 	}
 
+	decPassword, err := Decrypt(getUser.Password, Salt)
+	getUser.Password = decPassword
+
 	user := schemabuilder.BuildControllerUserFromDBUser(getUser)
 	return &user, nil
 }
@@ -116,18 +153,40 @@ func (c *Controller) User(id uuid.UUID) (*controllerSchema.User, error) {
 // TODO: return specific errors to identify on api 404 Not found, 409 Conflict(if exists)
 
 func (c *Controller) CreateUser(user *controllerSchema.User) (*controllerSchema.User, error) {
+	encPassword, err := Encrypt(user.Password, Salt)
+	if err != nil {
+		return nil, err
+	}
+
+	user.Password = encPassword
+
 	dbUser := schemabuilder.BuildDBUserFromControllerUser(user)
 	createdDBUser, err := c.repo.CreateUser(&dbUser)
 	if err != nil {
 		return nil, err
 	}
 
+	decPassword, err := Decrypt(createdDBUser.Password, Salt)
+	if err != nil {
+		return nil, err
+	}
+
+	createdDBUser.Password = decPassword
+
 	createdUser := schemabuilder.BuildControllerUserFromDBUser(createdDBUser)
 	return &createdUser, nil
 }
 
 // 200, 204(if no changes?), 404
+
 func (c *Controller) UpdateUser(id uuid.UUID, user *controllerSchema.User) (*controllerSchema.User, error) {
+	encPassword, err := Encrypt(user.Password, Salt)
+	if err != nil {
+		return nil, err
+	}
+
+	user.Password = encPassword
+
 	dbUser := schemabuilder.BuildDBUserFromControllerUser(user)
 	dbUser.ID = id
 
@@ -136,11 +195,19 @@ func (c *Controller) UpdateUser(id uuid.UUID, user *controllerSchema.User) (*con
 		return nil, err
 	}
 
+	decPassword, err := Decrypt(updateUser.Password, Salt)
+	if err != nil {
+		return nil, err
+	}
+
+	updateUser.Password = decPassword
+
 	updatedUser := schemabuilder.BuildControllerUserFromDBUser(updateUser)
 	return &updatedUser, nil
 }
 
 // 200, 404
+
 func (c *Controller) DeleteUser(id uuid.UUID) (*controllerSchema.User, error) {
 	dbUser, err := c.repo.DeleteUser(id)
 	if err != nil {
