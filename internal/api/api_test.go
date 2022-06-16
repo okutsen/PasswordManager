@@ -39,7 +39,7 @@ func TestGetRecords(t *testing.T) {
 		tt: []*TableTest{
 			{
 				testName:           "Get all records",
-				handle:             ContextSetter(apictx, NewListRecordsHandler(apictx)),
+				handle:             ContextSetter(apictx.logger, NewListRecordsHandler(apictx)),
 				httpMethod:         http.MethodGet,
 				httpPath:           "/records",
 				expectedHTTPStatus: http.StatusOK,
@@ -47,33 +47,33 @@ func TestGetRecords(t *testing.T) {
 			},
 			{
 				testName:   "Get record by id 1",
-				handle:     ContextSetter(apictx, NewGetRecordHandler(apictx)),
+				handle:     ContextSetter(apictx.logger, NewGetRecordHandler(apictx)),
 				httpMethod: http.MethodGet,
 				httpPath:   "/records/0",
 				ps: httprouter.Params{
-					httprouter.Param{Key: IDPathParamName, Value: "0"},
+					httprouter.Param{Key: RecordIDPPN, Value: "0"},
 				},
 				expectedHTTPStatus: http.StatusOK,
 				expectedBody:       "Records:\n0",
 			},
 			{
 				testName:   "Get record by id 5",
-				handle:     ContextSetter(apictx, NewGetRecordHandler(apictx)),
+				handle:     ContextSetter(apictx.logger, NewGetRecordHandler(apictx)),
 				httpMethod: http.MethodGet,
 				httpPath:   "/records/5",
 				ps: httprouter.Params{
-					httprouter.Param{Key: IDPathParamName, Value: "5"},
+					httprouter.Param{Key: RecordIDPPN, Value: "5"},
 				},
 				expectedHTTPStatus: http.StatusOK,
 				expectedBody:       "Records:\n5",
 			},
 			{
 				testName:   "Returns 404 on missing record",
-				handle:     ContextSetter(apictx, NewGetRecordHandler(apictx)),
+				handle:     ContextSetter(apictx.logger, NewGetRecordHandler(apictx)),
 				httpMethod: http.MethodGet,
 				httpPath:   "/records/a",
 				ps: httprouter.Params{
-					httprouter.Param{Key: IDPathParamName, Value: "a"},
+					httprouter.Param{Key: RecordIDPPN, Value: "a"},
 				},
 				expectedHTTPStatus: http.StatusBadRequest,
 				expectedBody:       http.StatusText(http.StatusBadRequest),
@@ -90,7 +90,7 @@ func TestPostRecords(t *testing.T) {
 		tt: []*TableTest{
 			{
 				testName:           "Post record",
-				handle:             ContextSetter(apictx, NewCreateRecordHandler(apictx)),
+				handle:             ContextSetter(apictx.logger, NewCreateRecordHandler(apictx)),
 				httpMethod:         http.MethodPost,
 				httpPath:           "/records/",
 				expectedHTTPStatus: http.StatusAccepted,

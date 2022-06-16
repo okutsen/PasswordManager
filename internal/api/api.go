@@ -13,7 +13,8 @@ import (
 )
 
 const (
-	IDPathParamName = "RecordID"
+	// PPN: Path Parameter Name
+	RecordIDPPN = "RecordID"
 )
 
 type Controller interface {
@@ -49,11 +50,11 @@ func (api *API) Start() error {
 	api.ctx.logger.Info("API started")
 	router := httprouter.New()
 
-	router.GET("/records", ContextSetter(api.ctx, NewListRecordsHandler(api.ctx)))
-	router.GET(fmt.Sprintf("/records/:%s", IDPathParamName), ContextSetter(api.ctx, NewGetRecordHandler(api.ctx)))
-	router.POST("/records", ContextSetter(api.ctx, NewCreateRecordHandler(api.ctx)))
-	router.PUT("/records", ContextSetter(api.ctx, NewUpdateRecordHandler(api.ctx)))
-	router.DELETE(fmt.Sprintf("/records/:%s", IDPathParamName), ContextSetter(api.ctx, NewDeleteRecordHandler(api.ctx)))
+	router.GET("/records", ContextSetter(api.ctx.logger, NewListRecordsHandler(api.ctx)))
+	router.POST("/records", ContextSetter(api.ctx.logger, NewCreateRecordHandler(api.ctx)))
+	router.GET(fmt.Sprintf("/records/:%s", RecordIDPPN), ContextSetter(api.ctx.logger, NewGetRecordHandler(api.ctx)))
+	router.PUT(fmt.Sprintf("/records/:%s", RecordIDPPN), ContextSetter(api.ctx.logger, NewUpdateRecordHandler(api.ctx)))
+	router.DELETE(fmt.Sprintf("/records/:%s", RecordIDPPN), ContextSetter(api.ctx.logger, NewDeleteRecordHandler(api.ctx)))
 
 	api.server = http.Server{Addr: api.config.Address(), Handler: router}
 
