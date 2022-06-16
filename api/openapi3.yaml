@@ -1,15 +1,22 @@
 components:
     parameters:
-        CorrelationIDHeaderParam:
+        AuthorizationTokenHPN:
+            description: Correlation id
+            in: header
+            name: Authorization
+            schema:
+                format: uuid
+                type: string
+        CorrelationIDHPN:
             description: Correlation id
             in: header
             name: X-Request-ID
             schema:
                 format: uuid
                 type: string
-        RecordIDPathParam:
+        IDPPN:
             in: path
-            name: RecordID
+            name: id
             required: true
             schema:
                 format: uuid
@@ -58,16 +65,53 @@ components:
             type: object
         Record:
             properties:
-                id:
-                    format: uuid
+                created_at:
+                    format: date-time
                     type: string
+                created_by:
+                    type: string
+                description:
+                    type: string
+                id: {}
                 login:
                     type: string
                 name:
                     type: string
                 password:
                     type: string
+                updated_at:
+                    format: date-time
+                    type: string
+                updated_by:
+                    type: string
+                url:
+                    type: string
             type: object
+        User:
+            properties:
+                created_at:
+                    format: date-time
+                    type: string
+                email:
+                    type: string
+                id: {}
+                login:
+                    type: string
+                name:
+                    type: string
+                password:
+                    type: string
+                phone:
+                    type: string
+                updated_at:
+                    format: date-time
+                    type: string
+            type: object
+    securitySchemes:
+        AuthorizationToken:
+            bearerFormat: JWT
+            scheme: bearer
+            type: http
 info:
     contact:
         url: https://github.com/okutsen/PasswordManager
@@ -94,22 +138,11 @@ paths:
                     $ref: '#/components/responses/ErrorResponse'
                 "500":
                     $ref: '#/components/responses/ErrorResponse'
-        put:
-            operationId: UpdateRecord
-            requestBody:
-                $ref: '#/components/requestBodies/UpdateRecordRequest'
-            responses:
-                "202":
-                    $ref: '#/components/responses/RecordResponse'
-                "400":
-                    $ref: '#/components/responses/ErrorResponse'
-                "500":
-                    $ref: '#/components/responses/ErrorResponse'
-    /records/{RecordID}:
+    /records/{id}:
         delete:
             operationId: DeleteRecord
             parameters:
-                - $ref: '#/components/parameters/RecordIDPathParam'
+                - $ref: '#/components/parameters/IDPPN'
             responses:
                 "200":
                     description: Record deleted
@@ -120,9 +153,22 @@ paths:
         get:
             operationId: GetRecord
             parameters:
-                - $ref: '#/components/parameters/RecordIDPathParam'
+                - $ref: '#/components/parameters/IDPPN'
             responses:
                 "200":
+                    $ref: '#/components/responses/RecordResponse'
+                "400":
+                    $ref: '#/components/responses/ErrorResponse'
+                "500":
+                    $ref: '#/components/responses/ErrorResponse'
+        put:
+            operationId: UpdateRecord
+            parameters:
+                - $ref: '#/components/parameters/IDPPN'
+            requestBody:
+                $ref: '#/components/requestBodies/UpdateRecordRequest'
+            responses:
+                "202":
                     $ref: '#/components/responses/RecordResponse'
                 "400":
                     $ref: '#/components/responses/ErrorResponse'

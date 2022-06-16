@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/google/uuid"
+	"github.com/invopop/yaml"
 	"github.com/julienschmidt/httprouter"
 
-	"github.com/okutsen/PasswordManager/schema/controllerSchema"
-
 	"github.com/okutsen/PasswordManager/internal/log"
+	"github.com/okutsen/PasswordManager/schema/controllerSchema"
 )
 
 const (
@@ -20,7 +21,7 @@ const (
 	CorrelationIDHPN      = "X-Request-ID"
 	AuthorizationTokenHPN = "Authorization"
 
-	RequestContextName    = "rctx"
+	RequestContextName = "rctx"
 )
 
 type Controller interface {
@@ -59,15 +60,19 @@ func New(config *Config, controller Controller, logger log.Logger) *API {
 	return &API{
 		config: config,
 		ctx: &APIContext{
-			ctrl: controller,
-			logger:     logger.WithFields(log.Fields{"service": "API"}),
+			ctrl:   controller,
+			logger: logger.WithFields(log.Fields{"service": "API"}),
 		},
 	}
 }
 
 func (api *API) Start() error {
 	api.ctx.logger.Info("API started")
+	spec := NewOpenAPIv3(api.config, api.ctx.logger)
 	router := httprouter.New()
+
+	router.GET("/openapi3.json", ContextSetter(api.ctx.logger, NewJSONSpecHandler(api.ctx.logger, spec)))
+	router.GET("/openapi3.yaml", ContextSetter(api.ctx.logger, NewYAMLSpecHandler(api.ctx.logger, spec)))
 
 	router.GET("/records", ContextSetter(api.ctx.logger, NewListRecordsHandler(api.ctx)))
 	router.POST("/records", ContextSetter(api.ctx.logger, NewCreateRecordHandler(api.ctx)))
@@ -89,4 +94,39 @@ func (api *API) Start() error {
 func (api *API) Stop(ctx context.Context) error {
 	api.ctx.logger.Infof("shutting down server")
 	return api.server.Shutdown(ctx)
+}
+
+func NewJSONSpecHandler(parentLogger log.Logger, spec *openapi3.T) http.HandlerFunc {
+	logger := parentLogger.WithFields(log.Fields{"handler": "SpecHandler"})
+	return func(w http.ResponseWriter, r *http.Request) {
+		rctx := unpackRequestContext(r.Context(), logger)
+		logger = logger.WithFields(log.Fields{
+			"cor_id": rctx.corID.String(),
+		})
+		writeResponse(w, &spec, http.StatusOK, logger)
+	}
+}
+
+func NewYAMLSpecHandler(parentLogger log.Logger, spec *openapi3.T) http.HandlerFunc {
+	logger := parentLogger.WithFields(log.Fields{"handler": "SpecHandler"})
+	return func(w http.ResponseWriter, r *http.Request) {
+		rctx := unpackRequestContext(r.Context(), logger)
+		logger = logger.WithFields(log.Fields{
+			"cor_id": rctx.corID.String(),
+		})
+		w.Header().Set("Content-Type", "application/x-yaml")
+		data, err := yaml.Marshal(&spec)
+		if err != nil {
+			logger.Errorf("Failed to marshal yaml: %s", err.Error())
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		_, err = w.Write(data)
+		if err != nil {
+			logger.Errorf("Failed to write response: %s", err.Error())
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	}
 }

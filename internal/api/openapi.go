@@ -2,10 +2,37 @@ package api
 
 import (
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/openapi3gen"
+	
+	"github.com/okutsen/PasswordManager/internal/log"
+	"github.com/okutsen/PasswordManager/schema/apischema"
 )
 
+func generateSchemas(logger log.Logger) openapi3.Schemas {
+	schemas := make(openapi3.Schemas)
+	gen := openapi3gen.NewGenerator()
+	RecordRef, err := gen.NewSchemaRefForValue(&apischema.Record{}, schemas)
+	if err != nil {
+		logger.Fatal("Failed to generate schema from Record")
+	}
+	UserRef, err := gen.NewSchemaRefForValue(&apischema.User{}, schemas)
+	if err != nil {
+		logger.Fatal("Failed to generate schema from User")
+	}
+	ErrorRef, err := gen.NewSchemaRefForValue(&apischema.Error{}, schemas)
+	if err != nil {
+		logger.Fatal("Failed to generate schema from Error")
+	}
+	resultSchema := openapi3.Schemas{
+		"Record": RecordRef,
+		"User":   UserRef,
+		"Error":  ErrorRef,
+	}
+	return resultSchema
+}
+
 // NewOpenAPIv3 instantiates the OpenAPI specification
-func NewOpenAPIv3(cfg *Config) *openapi3.T {
+func NewOpenAPIv3(cfg *Config, logger log.Logger) *openapi3.T {
 	spec := &openapi3.T{
 		OpenAPI: "3.0.0",
 		Info: &openapi3.Info{
@@ -23,27 +50,25 @@ func NewOpenAPIv3(cfg *Config) *openapi3.T {
 			},
 		},
 	}
-	// TODO: use openapi3gen to generate schemas from go structs
-	spec.Components.Schemas = openapi3.Schemas{
-		// TODO: add required properties
-		"Record": openapi3.NewSchemaRef("",
-			openapi3.NewObjectSchema().
-				WithProperty("id", openapi3.NewUUIDSchema()).
-				WithProperty("name", openapi3.NewStringSchema()).
-				WithProperty("login", openapi3.NewStringSchema()).
-				WithProperty("password", openapi3.NewStringSchema())),
-		// TODO: add User schema
-		"Error": openapi3.NewSchemaRef("",
-			openapi3.NewObjectSchema().
-				WithProperty("message", openapi3.NewStringSchema())),
+	spec.Components.Schemas = generateSchemas(logger)
+	spec.Components.SecuritySchemes = openapi3.SecuritySchemes{
+		"AuthorizationToken": &openapi3.SecuritySchemeRef{
+			Value: openapi3.NewJWTSecurityScheme(),
+		},
 	}
 	spec.Components.Parameters = openapi3.ParametersMap{
-		"RecordIDPathParam": &openapi3.ParameterRef{
+		"IDPPN": &openapi3.ParameterRef{
 			Value: openapi3.NewPathParameter(IDPPN).
+				WithRequired(true).
 				WithSchema(openapi3.NewUUIDSchema()),
 		},
-		"CorrelationIDHeaderParam": &openapi3.ParameterRef{
+		"CorrelationIDHPN": &openapi3.ParameterRef{
 			Value: openapi3.NewHeaderParameter(CorrelationIDHPN).
+				WithDescription("Correlation id").
+				WithSchema(openapi3.NewUUIDSchema()),
+		},
+		"AuthorizationTokenHPN": &openapi3.ParameterRef{
+			Value: openapi3.NewHeaderParameter(AuthorizationTokenHPN).
 				WithDescription("Correlation id").
 				WithSchema(openapi3.NewUUIDSchema()),
 		},
@@ -120,8 +145,30 @@ func NewOpenAPIv3(cfg *Config) *openapi3.T {
 					},
 				},
 			},
+		},
+		"/records/{" + IDPPN + "}": &openapi3.PathItem{
+			Get: &openapi3.Operation{
+				OperationID: "GetRecord",
+				Parameters: []*openapi3.ParameterRef{{
+					Ref: "#/components/parameters/IDPPN",
+				}},
+				Responses: openapi3.Responses{
+					"200": &openapi3.ResponseRef{
+						Ref: "#/components/responses/RecordResponse",
+					},
+					"400": &openapi3.ResponseRef{
+						Ref: "#/components/responses/ErrorResponse",
+					},
+					"500": &openapi3.ResponseRef{
+						Ref: "#/components/responses/ErrorResponse",
+					},
+				},
+			},
 			Put: &openapi3.Operation{
 				OperationID: "UpdateRecord",
+				Parameters: []*openapi3.ParameterRef{{
+					Ref: "#/components/parameters/IDPPN",
+				}},
 				RequestBody: &openapi3.RequestBodyRef{
 					Ref: "#/components/requestBodies/UpdateRecordRequest",
 				},
@@ -137,29 +184,10 @@ func NewOpenAPIv3(cfg *Config) *openapi3.T {
 					},
 				},
 			},
-		},
-		"/records/{" + IDPPN + "}": &openapi3.PathItem{
-			Get: &openapi3.Operation{
-				OperationID: "GetRecord",
-				Parameters: []*openapi3.ParameterRef{{
-					Ref: "#/components/parameters/RecordIDPathParam",
-				}},
-				Responses: openapi3.Responses{
-					"200": &openapi3.ResponseRef{
-						Ref: "#/components/responses/RecordResponse",
-					},
-					"400": &openapi3.ResponseRef{
-						Ref: "#/components/responses/ErrorResponse",
-					},
-					"500": &openapi3.ResponseRef{
-						Ref: "#/components/responses/ErrorResponse",
-					},
-				},
-			},
 			Delete: &openapi3.Operation{
 				OperationID: "DeleteRecord",
 				Parameters: []*openapi3.ParameterRef{{
-					Ref: "#/components/parameters/RecordIDPathParam",
+					Ref: "#/components/parameters/IDPPN",
 				}},
 				Responses: openapi3.Responses{
 					"200": &openapi3.ResponseRef{
