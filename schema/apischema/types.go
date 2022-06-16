@@ -23,8 +23,6 @@ type User struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-// TODO: add validator
-// TODO: add uuid (request id)
 type Record struct {
 	ID          uuid.UUID `json:"id"`
 	Name        string    `json:"name"`
