@@ -90,14 +90,3 @@ func (api *API) Stop(ctx context.Context) error {
 	api.ctx.logger.Infof("shutting down server")
 	return api.server.Shutdown(ctx)
 }
-
-func parseRequestID(idStr string, logger log.Logger) uuid.UUID {
-	id, err := uuid.Parse(idStr)
-	if err != nil {
-		logger.Warnf("Invalid corID <%s>: %s", idStr, err)
-		newID := uuid.New()
-		logger.Debugf("Setting new corID: %s", newID.String())
-		return newID
-	}
-	return id
-}
