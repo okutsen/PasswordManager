@@ -3,9 +3,10 @@ package apischema
 import "github.com/google/uuid"
 
 const (
-	InvalidJSONMessage   = "Invalid JSON"
-	InvalidRecordIDMessage   = "Invalid record ID"
-	InternalErrorMessage = "Oops, something went wrong"
+	InvalidJSONMessage     = "Invalid JSON"
+	InvalidRecordIDMessage = "Invalid record ID"
+	InternalErrorMessage   = "Oops, something went wrong"
+	UnAuthorizedMessage    = "Sign in to use service"
 )
 
 // TODO: add validator

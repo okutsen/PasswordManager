@@ -2,11 +2,14 @@ package api
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
 	"github.com/okutsen/PasswordManager/internal/log"
+	"github.com/okutsen/PasswordManager/schema/apischema"
 )
 
 // ContextSetter reads header, creates RequestContext and adds it to r.Context
@@ -24,6 +27,31 @@ func ContextSetter(logger log.Logger, next http.HandlerFunc) httprouter.Handle {
 			ps:    ps,
 		})
 		r = r.WithContext(ctx)
+		next(w, r)
+	}
+}
+
+func AuthorizationCheck(log log.Logger, next http.HandlerFunc) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		tokenStr := r.Header.Get(AuthorizationTokenHPN)
+		if tokenStr == "" {
+			writeResponse(w, apischema.Error{Message: apischema.UnAuthorizedMessage}, http.StatusUnauthorized, log)
+			return
+		}
+		token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
+			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, errors.New("wrong signing method")
+			}
+			return SigningKey, nil
+		})
+		if err != nil {
+			log.Warnf("Failed to parse JWT token: %s", err.Error())
+		}
+
+		if !token.Valid {
+			log.Warn("Received invalid JSW token")
+			writeResponse(w, apischema.Error{Message: apischema.InvalidJSONMessage}, http.StatusUnauthorized, log)
+		}
 		next(w, r)
 	}
 }
