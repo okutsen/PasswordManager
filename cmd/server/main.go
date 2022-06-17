@@ -21,8 +21,7 @@ func main() {
 	logger := log.New()
 	cfg, err := config.New()
 	if err != nil {
-		logger.Errorf("failed to initialize config: %v", err)
-		os.Exit(1)
+		logger.Fatalf("failed to initialize config: %s", err.Error())
 	}
 
 	db, err := repo.New(&repo.Config{
@@ -34,8 +33,7 @@ func main() {
 		Password: cfg.DB.Password,
 	})
 	if err != nil {
-		logger.Errorf("failed to initialize DB: %v", err)
-		os.Exit(1)
+		logger.Fatalf("failed to initialize DB: %s", err.Error())
 	}
 	logger.Info("DB is started")
 
@@ -46,7 +44,7 @@ func main() {
 	go func() {
 		err = serviceAPI.Start()
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			logger.Errorf("failed to start application %v", err)
+			logger.Errorf("failed to start application %s", err.Error())
 			return
 		}
 	}()
@@ -59,7 +57,7 @@ func main() {
 
 	err = db.Close()
 	if err != nil {
-		logger.Warnf("failed to close DB: %v", err)
+		logger.Warnf("failed to close DB: %s", err.Error())
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), cfg.API.ShutdownTimeout)
@@ -67,8 +65,7 @@ func main() {
 
 	err = serviceAPI.Stop(ctx)
 	if err != nil {
-		logger.Errorf("failed to stop application %v", err)
-		os.Exit(1)
+		logger.Fatalf("failed to stop application %s", err.Error())
 	}
 
 }

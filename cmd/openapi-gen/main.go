@@ -38,7 +38,7 @@ func main() {
 		logger.Fatalf("Failed to initialize config: %v", err)
 	}
 
-	spec := api.NewOpenAPIv3(&api.Config{Port: cfg.API.Port})
+	spec := api.NewOpenAPIv3(&api.Config{Port: cfg.API.Port}, logger)
 
 	switch outputFileType {
 	case "json":

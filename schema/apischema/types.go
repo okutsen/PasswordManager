@@ -7,9 +7,11 @@ import (
 )
 
 const (
-	InvalidIDParam       = "Invalid ID"
-	InvalidJSONMessage   = "Invalid JSON"
-	InternalErrorMessage = "Oops, something went wrong"
+	InvalidJSONMessage     = "Invalid JSON"
+	InvalidRecordIDMessage = "Invalid record ID"
+	InvalidUserIDMessage = "Invalid user ID"
+	InternalErrorMessage   = "Oops, something went wrong"
+	UnAuthorizedMessage    = "Sign in to use service"
 )
 
 type User struct {
@@ -28,12 +30,12 @@ type Record struct {
 	Name        string    `json:"name"`
 	Login       string    `json:"login"`
 	Password    string    `json:"password"`
-	URL         string    `json:"url"`
-	Description string    `json:"description"`
-	UpdatedBy   string    `json:"updated_by"`
-	CreatedBy   string    `json:"created_by"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	URL         string    `json:"url,omitempty"`
+	Description string    `json:"description,omitempty"`
+	UpdatedBy   string    `json:"updated_by,omitempty"`
+	CreatedBy   string    `json:"created_by,omitempty"`
+	CreatedAt   time.Time `json:"created_at,omitempty"`
+	UpdatedAt   time.Time `json:"updated_at,omitempty"`
 }
 
 type Error struct {
