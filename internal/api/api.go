@@ -11,6 +11,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 
 	"github.com/okutsen/PasswordManager/internal/log"
+	"github.com/okutsen/PasswordManager/schema/apischema"
 	"github.com/okutsen/PasswordManager/schema/controllerSchema"
 )
 
@@ -68,27 +69,63 @@ func New(config *Config, controller Controller, logger log.Logger) *API {
 
 func (api *API) Start() error {
 	api.ctx.logger.Info("API started")
-	spec := NewOpenAPIv3(api.config, api.ctx.logger)
 	router := httprouter.New()
-
-	router.GET("/openapi3.json", ContextSetter(api.ctx.logger, NewJSONSpecHandler(api.ctx.logger, spec)))
-	router.GET("/openapi3.yaml", ContextSetter(api.ctx.logger, NewYAMLSpecHandler(api.ctx.logger, spec)))
-
-	router.GET("/records", ContextSetter(api.ctx.logger, NewListRecordsHandler(api.ctx)))
-	router.POST("/records", ContextSetter(api.ctx.logger, NewCreateRecordHandler(api.ctx)))
-	router.GET(fmt.Sprintf("/records/:%s", IDPPN), ContextSetter(api.ctx.logger, NewGetRecordHandler(api.ctx)))
-	router.PUT(fmt.Sprintf("/records/:%s", IDPPN), ContextSetter(api.ctx.logger, NewUpdateRecordHandler(api.ctx)))
-	router.DELETE(fmt.Sprintf("/records/:%s", IDPPN), ContextSetter(api.ctx.logger, NewDeleteRecordHandler(api.ctx)))
-
-	router.GET("/records", ContextSetter(api.ctx.logger, NewListUsersHandler(api.ctx)))
-	router.POST("/records", ContextSetter(api.ctx.logger, NewCreateUserHandler(api.ctx)))
-	router.GET(fmt.Sprintf("/records/:%s", IDPPN), ContextSetter(api.ctx.logger, NewGetUserHandler(api.ctx)))
-	router.PUT(fmt.Sprintf("/records/:%s", IDPPN), ContextSetter(api.ctx.logger, NewUpdateUserHandler(api.ctx)))
-	router.DELETE(fmt.Sprintf("/records/:%s", IDPPN), ContextSetter(api.ctx.logger, NewDeleteUserHandler(api.ctx)))
+	api.SetFunctionalEndpoints(router)
+	api.SetRecordEndpoints(router)
+	api.SetUserEndpoints(router)
 
 	api.server = http.Server{Addr: api.config.Address(), Handler: router}
 
 	return api.server.ListenAndServe()
+}
+
+func (api *API) SetRecordEndpoints(r *httprouter.Router) {
+	r.GET("/records",
+		AuthorizationCheck(api.ctx.logger, ContextSetter(api.ctx.logger,
+			NewListRecordsHandler(api.ctx))))
+	r.POST("/records",
+		AuthorizationCheck(api.ctx.logger, ContextSetter(api.ctx.logger,
+			NewCreateRecordHandler(api.ctx))))
+	r.GET(fmt.Sprintf("/records/:%s", IDPPN),
+		AuthorizationCheck(api.ctx.logger, ContextSetter(api.ctx.logger,
+			NewGetRecordHandler(api.ctx))))
+	r.PUT(fmt.Sprintf("/records/:%s", IDPPN),
+		AuthorizationCheck(api.ctx.logger, ContextSetter(api.ctx.logger,
+			NewUpdateRecordHandler(api.ctx))))
+	r.DELETE(fmt.Sprintf("/records/:%s", IDPPN),
+		AuthorizationCheck(api.ctx.logger, ContextSetter(api.ctx.logger,
+			NewDeleteRecordHandler(api.ctx))))
+}
+
+func (api *API) SetUserEndpoints(r *httprouter.Router) {
+	r.GET("/users",
+		AuthorizationCheck(api.ctx.logger, ContextSetter(api.ctx.logger,
+			NewListUsersHandler(api.ctx))))
+	r.POST("/users",
+		AuthorizationCheck(api.ctx.logger, ContextSetter(api.ctx.logger,
+			NewCreateUserHandler(api.ctx))))
+	r.GET(fmt.Sprintf("/users/:%s", IDPPN),
+		AuthorizationCheck(api.ctx.logger, ContextSetter(api.ctx.logger,
+			NewGetUserHandler(api.ctx))))
+	r.PUT(fmt.Sprintf("/users/:%s", IDPPN),
+		AuthorizationCheck(api.ctx.logger, ContextSetter(api.ctx.logger,
+			NewUpdateUserHandler(api.ctx))))
+	r.DELETE(fmt.Sprintf("/users/:%s", IDPPN),
+		AuthorizationCheck(api.ctx.logger, ContextSetter(api.ctx.logger,
+			NewDeleteUserHandler(api.ctx))))
+}
+
+func (api *API) SetFunctionalEndpoints(r *httprouter.Router) {
+	spec := NewOpenAPIv3(api.config, api.ctx.logger)
+	r.GET("/authMePlease",
+		ContextSetter(api.ctx.logger,
+			NewFreeAccessHandler(api.ctx.logger)))
+	r.GET("/openapi3.json",
+		ContextSetter(api.ctx.logger,
+			NewJSONSpecHandler(api.ctx.logger, spec)))
+	r.GET("/openapi3.yaml",
+		ContextSetter(api.ctx.logger,
+			NewYAMLSpecHandler(api.ctx.logger, spec)))
 }
 
 func (api *API) Stop(ctx context.Context) error {
@@ -99,10 +136,6 @@ func (api *API) Stop(ctx context.Context) error {
 func NewJSONSpecHandler(parentLogger log.Logger, spec *openapi3.T) http.HandlerFunc {
 	logger := parentLogger.WithFields(log.Fields{"handler": "SpecHandler"})
 	return func(w http.ResponseWriter, r *http.Request) {
-		rctx := unpackRequestContext(r.Context(), logger)
-		logger = logger.WithFields(log.Fields{
-			"cor_id": rctx.corID.String(),
-		})
 		writeResponse(w, &spec, http.StatusOK, logger)
 	}
 }
@@ -110,10 +143,6 @@ func NewJSONSpecHandler(parentLogger log.Logger, spec *openapi3.T) http.HandlerF
 func NewYAMLSpecHandler(parentLogger log.Logger, spec *openapi3.T) http.HandlerFunc {
 	logger := parentLogger.WithFields(log.Fields{"handler": "SpecHandler"})
 	return func(w http.ResponseWriter, r *http.Request) {
-		rctx := unpackRequestContext(r.Context(), logger)
-		logger = logger.WithFields(log.Fields{
-			"cor_id": rctx.corID.String(),
-		})
 		w.Header().Set("Content-Type", "application/x-yaml")
 		data, err := yaml.Marshal(&spec)
 		if err != nil {
@@ -128,5 +157,22 @@ func NewYAMLSpecHandler(parentLogger log.Logger, spec *openapi3.T) http.HandlerF
 			return
 		}
 		w.WriteHeader(http.StatusOK)
+	}
+}
+
+func NewFreeAccessHandler(logger log.Logger) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		token, err := GenerateJWT(uuid.NewString())
+		if err != nil {
+			writeResponse(w, apischema.Error{Message: "Oops, failed to generate your token"}, http.StatusOK, logger)
+		}
+		t := struct {
+			Message string `json:"message,omitempty"`
+			Token   string `json:"token"`
+		}{
+			Message: "Here, use this as Authorization header",
+			Token:   token,
+		}
+		writeResponse(w, &t, http.StatusOK, logger)
 	}
 }

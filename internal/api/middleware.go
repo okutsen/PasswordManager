@@ -12,6 +12,32 @@ import (
 	"github.com/okutsen/PasswordManager/schema/apischema"
 )
 
+func AuthorizationCheck(log log.Logger, next httprouter.Handle) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		tokenStr := r.Header.Get(AuthorizationTokenHPN)
+		if tokenStr == "" {
+			writeResponse(w, apischema.Error{Message: apischema.UnAuthorizedMessage}, http.StatusUnauthorized, log)
+			return
+		}
+		// TODO: use Bearer format
+		token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
+			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, errors.New("wrong signing method")
+			}
+			return SigningKey, nil
+		})
+		if err != nil {
+			log.Warnf("Failed to parse JWT token: %s", err.Error())
+		}
+
+		if !token.Valid {
+			log.Warn("Received invalid JSW token")
+			writeResponse(w, apischema.Error{Message: apischema.InvalidJSONMessage}, http.StatusUnauthorized, log)
+		}
+		next(w, r, ps)
+	}
+}
+
 // ContextSetter reads header, creates RequestContext and adds it to r.Context
 func ContextSetter(logger log.Logger, next http.HandlerFunc) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -27,31 +53,6 @@ func ContextSetter(logger log.Logger, next http.HandlerFunc) httprouter.Handle {
 			ps:    ps,
 		})
 		r = r.WithContext(ctx)
-		next(w, r)
-	}
-}
-
-func AuthorizationCheck(log log.Logger, next http.HandlerFunc) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		tokenStr := r.Header.Get(AuthorizationTokenHPN)
-		if tokenStr == "" {
-			writeResponse(w, apischema.Error{Message: apischema.UnAuthorizedMessage}, http.StatusUnauthorized, log)
-			return
-		}
-		token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
-			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, errors.New("wrong signing method")
-			}
-			return SigningKey, nil
-		})
-		if err != nil {
-			log.Warnf("Failed to parse JWT token: %s", err.Error())
-		}
-
-		if !token.Valid {
-			log.Warn("Received invalid JSW token")
-			writeResponse(w, apischema.Error{Message: apischema.InvalidJSONMessage}, http.StatusUnauthorized, log)
-		}
 		next(w, r)
 	}
 }
