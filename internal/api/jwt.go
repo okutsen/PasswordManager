@@ -8,16 +8,17 @@ import (
 
 const (
 	// FIXME: move to env vars
-	SigningKey = ""
+	SigningKey = "DApAJQgpjRDHa9Ad"
+	ExpirationTime = time.Minute * 15
 )
 
-func GenerateJWT() (string, error) {
+func GenerateJWT(userID string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		// TODO: authorization level
 		"authorized": true,
 		// User ID
-		"user": "",
-		"exp": time.Now().Add(time.Minute * 15).Unix(),
+		"user": userID,
+		"exp":  time.Now().Add(ExpirationTime).Unix(),
 	})
 	tokenStr, err := token.SignedString(SigningKey)
 	if err != nil {
