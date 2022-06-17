@@ -17,8 +17,8 @@ import (
 
 const (
 	// PPN: Path Parameter Name
-	IDPPN = "id"
 	// HPN: Header Parameter Name
+	IDPPN                 = "id"
 	CorrelationIDHPN      = "X-Request-ID"
 	AuthorizationTokenHPN = "Authorization"
 

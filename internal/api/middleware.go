@@ -8,6 +8,7 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
+
 	"github.com/okutsen/PasswordManager/internal/log"
 	"github.com/okutsen/PasswordManager/schema/apischema"
 )
@@ -20,7 +21,7 @@ func AuthorizationCheck(log log.Logger, next httprouter.Handle) httprouter.Handl
 			return
 		}
 		// TODO: use Bearer format
-		token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
+		token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (any, error) {
 			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, errors.New("wrong signing method")
 			}
@@ -32,7 +33,8 @@ func AuthorizationCheck(log log.Logger, next httprouter.Handle) httprouter.Handl
 
 		if !token.Valid {
 			log.Warn("Received invalid JSW token")
-			writeResponse(w, apischema.Error{Message: apischema.InvalidJSONMessage}, http.StatusUnauthorized, log)
+			writeResponse(w, apischema.Error{Message: "Invalid token"}, http.StatusUnauthorized, log)
+			return
 		}
 		next(w, r, ps)
 	}

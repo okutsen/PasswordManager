@@ -8,9 +8,10 @@ import (
 
 const (
 	// FIXME: move to env vars
-	SigningKey = "DApAJQgpjRDHa9Ad"
 	ExpirationTime = time.Minute * 15
 )
+
+var SigningKey = []byte("DApAJQgpjRDHa9Ad")
 
 func GenerateJWT(userID string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
