@@ -107,7 +107,7 @@ func NewUpdateRecordHandler(apictx *APIContext) http.HandlerFunc {
 			return
 		}
 		var recordAPI *apischema.Record
-		recordsJSON, err := io.ReadAll(r.Body)
+		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			logger.Warnf("Failed to read JSON: %s", err.Error())
 			writeResponse(w,
@@ -115,7 +115,7 @@ func NewUpdateRecordHandler(apictx *APIContext) http.HandlerFunc {
 			return
 		}
 		defer r.Body.Close()
-		err = json.Unmarshal(recordsJSON, recordAPI)
+		err = json.Unmarshal(body, &recordAPI)
 		if err != nil {
 			logger.Warnf("failed to unmarshal JSON file: %s", err.Error())
 			writeResponse(w,
