@@ -1,6 +1,8 @@
 package api
 
 import (
+	"encoding/json"
+	"io"
 	"net/http"
 
 	"github.com/okutsen/PasswordManager/internal/log"
@@ -40,7 +42,7 @@ func NewGetUserHandler(apictx *APIContext) http.HandlerFunc {
 		userID, err := getIDFrom(rctx.ps, logger)
 		if err != nil {
 			logger.Warnf("Invalid user id: %s", err.Error())
-			writeResponse(w, 
+			writeResponse(w,
 				apischema.Error{Message: apischema.InvalidUserIDMessage}, http.StatusBadRequest, logger)
 			return
 		}
@@ -65,12 +67,19 @@ func NewCreateUserHandler(apictx *APIContext) http.HandlerFunc {
 			"cor_id": rctx.corID.String(),
 		})
 		var userAPI *apischema.User
-		err := readJSON(r.Body, &userAPI)
-		defer r.Body.Close()
+		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			logger.Warnf("Failed to read JSON: %s", err.Error())
 			writeResponse(w,
 				apischema.Error{Message: apischema.InvalidJSONMessage}, http.StatusBadRequest, logger)
+			return
+		}
+		defer r.Body.Close()
+		err = json.Unmarshal(body, &userAPI)
+		if err != nil {
+			logger.Warnf("failed to unmarshal JSON file: %s", err.Error())
+			writeResponse(w,
+				apischema.Error{Message: apischema.InternalErrorMessage}, http.StatusBadRequest, logger)
 			return
 		}
 		user := schemabuilder.BuildControllerUserFromAPIUser(userAPI)
@@ -99,7 +108,7 @@ func NewUpdateUserHandler(apictx *APIContext) http.HandlerFunc {
 		userID, err := getIDFrom(rctx.ps, logger)
 		if err != nil {
 			logger.Warnf("Invalid User id: %s", err.Error())
-			writeResponse(w, 
+			writeResponse(w,
 				apischema.Error{Message: apischema.InvalidUserIDMessage}, http.StatusBadRequest, logger)
 			return
 		}
@@ -112,7 +121,7 @@ func NewUpdateUserHandler(apictx *APIContext) http.HandlerFunc {
 				apischema.Error{Message: apischema.InvalidJSONMessage}, http.StatusBadRequest, logger)
 			return
 		}
-		if userID != userAPI.ID{
+		if userID != userAPI.ID {
 			logger.Warn("User id from path parameter doesn't match id from new user structure")
 			writeResponse(w,
 				apischema.Error{Message: apischema.InvalidJSONMessage}, http.StatusBadRequest, logger)
@@ -126,7 +135,7 @@ func NewUpdateUserHandler(apictx *APIContext) http.HandlerFunc {
 				apischema.Error{Message: apischema.InternalErrorMessage}, http.StatusInternalServerError, logger)
 			return
 		}
-		writeResponse(w, 
+		writeResponse(w,
 			schemabuilder.BuildAPIUserFromControllerUser(resultUser), http.StatusAccepted, logger)
 	}
 }
@@ -143,7 +152,7 @@ func NewDeleteUserHandler(apictx *APIContext) http.HandlerFunc {
 		userID, err := getIDFrom(rctx.ps, logger)
 		if err != nil {
 			logger.Warnf("Invalid User id: %s", err.Error())
-			writeResponse(w, 
+			writeResponse(w,
 				apischema.Error{Message: apischema.InvalidUserIDMessage}, http.StatusBadRequest, logger)
 			return
 		}
