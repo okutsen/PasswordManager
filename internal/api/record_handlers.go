@@ -1,6 +1,8 @@
 package api
 
 import (
+	"encoding/json"
+	"io"
 	"net/http"
 
 	"github.com/okutsen/PasswordManager/internal/log"
@@ -40,7 +42,7 @@ func NewGetRecordHandler(apictx *APIContext) http.HandlerFunc {
 		recordID, err := getIDFrom(rctx.ps, logger)
 		if err != nil {
 			logger.Warnf("Invalid record id: %s", err.Error())
-			writeResponse(w, 
+			writeResponse(w,
 				apischema.Error{Message: apischema.InvalidRecordIDMessage}, http.StatusBadRequest, logger)
 			return
 		}
@@ -100,20 +102,27 @@ func NewUpdateRecordHandler(apictx *APIContext) http.HandlerFunc {
 		recordID, err := getIDFrom(rctx.ps, logger)
 		if err != nil {
 			logger.Warnf("Invalid record id: %s", err.Error())
-			writeResponse(w, 
+			writeResponse(w,
 				apischema.Error{Message: apischema.InvalidRecordIDMessage}, http.StatusBadRequest, logger)
 			return
 		}
 		var recordAPI *apischema.Record
-		err = readJSON(r.Body, recordAPI)
-		defer r.Body.Close()
+		recordsJSON, err := io.ReadAll(r.Body)
 		if err != nil {
 			logger.Warnf("Failed to read JSON: %s", err.Error())
 			writeResponse(w,
 				apischema.Error{Message: apischema.InvalidJSONMessage}, http.StatusBadRequest, logger)
 			return
 		}
-		if recordID != recordAPI.ID{
+		defer r.Body.Close()
+		err = json.Unmarshal(recordsJSON, recordAPI)
+		if err != nil {
+			logger.Warnf("failed to unmarshal JSON file: %s", err.Error())
+			writeResponse(w,
+				apischema.Error{Message: apischema.InternalErrorMessage}, http.StatusBadRequest, logger)
+			return
+		}
+		if recordID != recordAPI.ID {
 			logger.Warn("Record id from path parameter doesn't match id from new record structure")
 			writeResponse(w,
 				apischema.Error{Message: apischema.InvalidJSONMessage}, http.StatusBadRequest, logger)
@@ -128,7 +137,7 @@ func NewUpdateRecordHandler(apictx *APIContext) http.HandlerFunc {
 			return
 		}
 		// TODO: get record from db
-		writeResponse(w, 
+		writeResponse(w,
 			schemabuilder.BuildAPIRecordFromControllerRecord(resultRecord), http.StatusAccepted, logger)
 	}
 }
@@ -145,7 +154,7 @@ func NewDeleteRecordHandler(apictx *APIContext) http.HandlerFunc {
 		recordID, err := getIDFrom(rctx.ps, logger)
 		if err != nil {
 			logger.Warnf("Invalid record id: %s", err.Error())
-			writeResponse(w, 
+			writeResponse(w,
 				apischema.Error{Message: apischema.InvalidRecordIDMessage}, http.StatusBadRequest, logger)
 			return
 		}
